@@ -39,9 +39,7 @@ class TestAppConfigReadWrite:
         write_app_config(AppConfig(), deep_path)
         assert deep_path.exists()
 
-    def test_roundtrip_with_wallpapers(
-        self, tmp_config_file: Path, sample_video: Path
-    ) -> None:
+    def test_roundtrip_with_wallpapers(self, tmp_config_file: Path, sample_video: Path) -> None:
         entry = WallpaperEntry(path=sample_video, name="Test")
         config = AppConfig(wallpapers=[entry])
         write_app_config(config, tmp_config_file)
@@ -64,9 +62,7 @@ class TestLockScreenWallpaper:
         assert "VideoUrls" in content
         assert str(sample_video.resolve()) in content
 
-    def test_preserves_existing_content(
-        self, tmp_path: Path, sample_video: Path
-    ) -> None:
+    def test_preserves_existing_content(self, tmp_path: Path, sample_video: Path) -> None:
         config_path = tmp_path / "kscreenlockerrc"
         config_path.write_text(
             "[SomeOtherSection]\nSomeKey=SomeValue\n",
@@ -96,38 +92,26 @@ class TestLockScreenWallpaper:
 class TestLibraryManagement:
     """Tests for adding/removing wallpapers from library."""
 
-    def test_add_wallpapers(
-        self, tmp_config_file: Path, sample_video: Path
-    ) -> None:
+    def test_add_wallpapers(self, tmp_config_file: Path, sample_video: Path) -> None:
         config = add_wallpapers_to_library([sample_video], tmp_config_file)
         assert len(config.wallpapers) == 1
         assert config.wallpapers[0].path == sample_video.resolve()
 
-    def test_add_duplicate_ignored(
-        self, tmp_config_file: Path, sample_video: Path
-    ) -> None:
+    def test_add_duplicate_ignored(self, tmp_config_file: Path, sample_video: Path) -> None:
         add_wallpapers_to_library([sample_video], tmp_config_file)
         config = add_wallpapers_to_library([sample_video], tmp_config_file)
         assert len(config.wallpapers) == 1
 
     def test_add_nonexistent_ignored(self, tmp_config_file: Path) -> None:
-        config = add_wallpapers_to_library(
-            [Path("/nonexistent/video.mp4")], tmp_config_file
-        )
+        config = add_wallpapers_to_library([Path("/nonexistent/video.mp4")], tmp_config_file)
         assert len(config.wallpapers) == 0
 
-    def test_remove_wallpaper(
-        self, tmp_config_file: Path, sample_video: Path
-    ) -> None:
+    def test_remove_wallpaper(self, tmp_config_file: Path, sample_video: Path) -> None:
         add_wallpapers_to_library([sample_video], tmp_config_file)
         config = remove_wallpaper_from_library(sample_video, tmp_config_file)
         assert len(config.wallpapers) == 0
 
-    def test_remove_nonexistent_no_error(
-        self, tmp_config_file: Path, sample_video: Path
-    ) -> None:
+    def test_remove_nonexistent_no_error(self, tmp_config_file: Path, sample_video: Path) -> None:
         add_wallpapers_to_library([sample_video], tmp_config_file)
-        config = remove_wallpaper_from_library(
-            Path("/other/file.mp4"), tmp_config_file
-        )
+        config = remove_wallpaper_from_library(Path("/other/file.mp4"), tmp_config_file)
         assert len(config.wallpapers) == 1

@@ -72,7 +72,10 @@ def apply_lock_screen_wallpaper(
         parser.add_section(greeter_section)
     parser.set(greeter_section, "WallpaperPlugin", "smart-video-wallpaper-reborn")
 
-    # Set video URLs in the plugin config section
+    # Set video URLs in the plugin config section.
+    # HACK: KDE uses nested bracket sections like [Greeter][Wallpaper][...][General].
+    # Python's configparser treats the entire string as a single section name,
+    # which produces the correct nested-bracket output when written to disk.
     plugin_section = "Greeter][Wallpaper][smart-video-wallpaper-reborn][General"
     if not parser.has_section(plugin_section):
         parser.add_section(plugin_section)

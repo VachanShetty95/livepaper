@@ -45,19 +45,33 @@ def detect_plasma_version() -> tuple[bool, str]:
 
 def detect_plugin_installed() -> bool:
     """Check if the Smart Video Wallpaper Reborn plugin is installed."""
-    # Check via pacman (Arch) first
-    result = _run_command([
-        "pacman", "-Qi", "plasma6-wallpapers-smart-video-wallpaper-reborn"
-    ])
-    if result is not None:
-        return True
+    # Check via pacman (Arch) — both release and git variants
+    for pkg in [
+        "plasma6-wallpapers-smart-video-wallpaper-reborn",
+        "plasma6-wallpapers-smart-video-wallpaper-reborn-git",
+    ]:
+        if _run_command(["pacman", "-Qi", pkg]) is not None:
+            return True
 
-    # Check if plugin files exist in KDE plugin paths
-    plugin_paths = [
-        Path.home() / ".local/share/plasma/wallpapers/smart-video-wallpaper-reborn",
-        Path("/usr/share/plasma/wallpapers/smart-video-wallpaper-reborn"),
+    # Check KDE plugin directories — the plugin may be installed via
+    # "Get New Plugins" (KDE Store) which uses a different directory name:
+    #   ~/.local/share/plasma/wallpapers/luisbocanegra.smart.video.wallpaper.reborn
+    # Or via manual install / package manager:
+    #   /usr/share/plasma/wallpapers/smart-video-wallpaper-reborn
+    plugin_dirs = [
+        Path.home() / ".local/share/plasma/wallpapers",
+        Path("/usr/share/plasma/wallpapers"),
     ]
-    return any(p.exists() for p in plugin_paths)
+    plugin_patterns = [
+        "*smart*video*wallpaper*reborn*",
+        "luisbocanegra.smart.video.wallpaper.reborn",
+    ]
+    for base_dir in plugin_dirs:
+        if base_dir.exists():
+            for pattern in plugin_patterns:
+                if list(base_dir.glob(pattern)):
+                    return True
+    return False
 
 
 def detect_codecs_available() -> bool:

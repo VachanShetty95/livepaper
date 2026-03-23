@@ -89,7 +89,9 @@ class TestDetectCodecsAvailable:
         mock_subprocess.return_value.returncode = 1
         mock_subprocess.return_value.stdout = ""
 
-        with patch("livepaper.services.system_detector.shutil.which", return_value="/usr/bin/ffmpeg"):
+        with patch(
+            "livepaper.services.system_detector.shutil.which", return_value="/usr/bin/ffmpeg"
+        ):
             assert detect_codecs_available() is True
 
     def test_nothing_found(self, mock_subprocess: MagicMock) -> None:

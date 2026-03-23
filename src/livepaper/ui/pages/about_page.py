@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
 from livepaper import __app_name__, __version__
+from livepaper.ui.utils import open_url
 
 
 class AboutPage(QWidget):
@@ -57,10 +57,7 @@ class AboutPage(QWidget):
         layout.addSpacing(24)
 
         # Credits
-        credits_label = QLabel(
-            "Plugin by Luis Bocanegra\n"
-            "App by Vachan Shetty"
-        )
+        credits_label = QLabel("Plugin by Luis Bocanegra\nApp by Vachan Shetty")
         credits_label.setStyleSheet("font-size: 12px; opacity: 0.6;")
         credits_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(credits_label)
@@ -83,11 +80,15 @@ class AboutPage(QWidget):
                 border-radius: 8px;
                 padding: 10px 20px;
                 font-size: 13px;
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: palette(text);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.14);
             }
         """)
-        github_btn.clicked.connect(
-            lambda: self._open_url("https://github.com/VachanShetty95/livepaper")
-        )
+        github_btn.clicked.connect(lambda: open_url("https://github.com/VachanShetty95/livepaper"))
         layout.addWidget(github_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         plugin_btn = QPushButton("🔌  Plugin Repository")
@@ -97,20 +98,17 @@ class AboutPage(QWidget):
                 border-radius: 8px;
                 padding: 10px 20px;
                 font-size: 13px;
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: palette(text);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.14);
             }
         """)
         plugin_btn.clicked.connect(
-            lambda: self._open_url(
-                "https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn"
-            )
+            lambda: open_url("https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn")
         )
         layout.addWidget(plugin_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addStretch(1)
-
-    @staticmethod
-    def _open_url(url: str) -> None:
-        """Open a URL in the system browser."""
-        from PyQt6.QtCore import QUrl
-
-        QDesktopServices.openUrl(QUrl(url))

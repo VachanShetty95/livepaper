@@ -90,10 +90,10 @@ class MainWindow(QMainWindow):
         self._settings_page = SettingsPage(service=self._service)
         self._about_page = AboutPage()
 
-        self._pages.addWidget(self._setup_wizard)   # index 0 = Home
-        self._pages.addWidget(self._library_view)    # index 1 = Wallpapers
-        self._pages.addWidget(self._settings_page)   # index 2 = Settings
-        self._pages.addWidget(self._about_page)      # index 3 = About
+        self._pages.addWidget(self._setup_wizard)  # index 0 = Home
+        self._pages.addWidget(self._library_view)  # index 1 = Wallpapers
+        self._pages.addWidget(self._settings_page)  # index 2 = Settings
+        self._pages.addWidget(self._about_page)  # index 3 = About
 
         layout.addWidget(self._pages, 1)
 

@@ -88,6 +88,12 @@ class LibraryView(QWidget):
                 padding: 8px 20px;
                 font-size: 13px;
                 font-weight: bold;
+                background-color: #228be6;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #339af0;
             }
         """)
         self._add_btn.clicked.connect(self.open_add_dialog)
@@ -121,9 +127,7 @@ class LibraryView(QWidget):
         layout.addLayout(content_layout, 1)
 
         # Empty state
-        self._empty_label = QLabel(
-            "No wallpapers yet.\nClick 'Add Wallpaper' to get started."
-        )
+        self._empty_label = QLabel("No wallpapers yet.\nClick 'Add Wallpaper' to get started.")
         self._empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._empty_label.setStyleSheet("font-size: 16px; opacity: 0.5; padding: 60px;")
         layout.addWidget(self._empty_label)
@@ -168,11 +172,15 @@ class LibraryView(QWidget):
                 border-radius: 8px;
                 padding: 10px 16px;
                 font-size: 13px;
+                background-color: #228be6;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #339af0;
             }
         """)
-        apply_desktop_btn.clicked.connect(
-            lambda: self._apply_selected(WallpaperTarget.DESKTOP)
-        )
+        apply_desktop_btn.clicked.connect(lambda: self._apply_selected(WallpaperTarget.DESKTOP))
         layout.addWidget(apply_desktop_btn)
 
         apply_lock_btn = QPushButton("🔒  Apply to Lock Screen")
@@ -181,11 +189,15 @@ class LibraryView(QWidget):
                 border-radius: 8px;
                 padding: 10px 16px;
                 font-size: 13px;
+                background-color: #7048e8;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #845ef7;
             }
         """)
-        apply_lock_btn.clicked.connect(
-            lambda: self._apply_selected(WallpaperTarget.LOCK_SCREEN)
-        )
+        apply_lock_btn.clicked.connect(lambda: self._apply_selected(WallpaperTarget.LOCK_SCREEN))
         layout.addWidget(apply_lock_btn)
 
         apply_both_btn = QPushButton("✨  Apply to Both")
@@ -195,11 +207,15 @@ class LibraryView(QWidget):
                 padding: 10px 16px;
                 font-size: 13px;
                 font-weight: bold;
+                background-color: #1098ad;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #15aabf;
             }
         """)
-        apply_both_btn.clicked.connect(
-            lambda: self._apply_selected(WallpaperTarget.BOTH)
-        )
+        apply_both_btn.clicked.connect(lambda: self._apply_selected(WallpaperTarget.BOTH))
         layout.addWidget(apply_both_btn)
 
         layout.addStretch(1)
@@ -210,6 +226,12 @@ class LibraryView(QWidget):
                 border-radius: 8px;
                 padding: 8px 16px;
                 font-size: 12px;
+                background-color: rgba(255, 59, 48, 0.15);
+                color: #ff6b6b;
+                border: 1px solid rgba(255, 59, 48, 0.3);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 59, 48, 0.25);
             }
         """)
         remove_btn.clicked.connect(self._remove_selected)

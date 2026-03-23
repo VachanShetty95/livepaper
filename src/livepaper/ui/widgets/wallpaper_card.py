@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QPixmap
+from PyQt6.QtGui import QAction, QContextMenuEvent, QMouseEvent, QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
     QLabel,
@@ -122,40 +122,33 @@ class WallpaperCard(QFrame):
         self._selected = selected
         self._apply_style(selected=selected)
 
-    def mousePressEvent(self, event: object) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Emit clicked signal on left click."""
         self.clicked.emit(self._entry)
-        super().mousePressEvent(event)  # type: ignore[arg-type]
+        super().mousePressEvent(event)
 
-    def contextMenuEvent(self, event: object) -> None:
+    def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
         """Show right-click context menu."""
         menu = QMenu(self)
 
         apply_desktop = QAction("Apply to Desktop", self)
-        apply_desktop.triggered.connect(
-            lambda: self.apply_desktop_requested.emit(self._entry)
-        )
+        apply_desktop.triggered.connect(lambda: self.apply_desktop_requested.emit(self._entry))
         menu.addAction(apply_desktop)
 
         apply_lock = QAction("Apply to Lock Screen", self)
-        apply_lock.triggered.connect(
-            lambda: self.apply_lockscreen_requested.emit(self._entry)
-        )
+        apply_lock.triggered.connect(lambda: self.apply_lockscreen_requested.emit(self._entry))
         menu.addAction(apply_lock)
 
         menu.addSeparator()
 
         remove_action = QAction("Remove from Library", self)
-        remove_action.triggered.connect(
-            lambda: self.remove_requested.emit(self._entry)
-        )
+        remove_action.triggered.connect(lambda: self.remove_requested.emit(self._entry))
         menu.addAction(remove_action)
 
-        menu.exec(event.globalPos())  # type: ignore[attr-defined]
+        if event is not None:
+            menu.exec(event.globalPos())
 
     def update_thumbnail(self, thumbnail_path: Path) -> None:
         """Update the card's thumbnail after background generation."""
-        self._entry = self._entry.model_copy(
-            update={"thumbnail_path": thumbnail_path}
-        )
+        self._entry = self._entry.model_copy(update={"thumbnail_path": thumbnail_path})
         self._set_thumbnail()

@@ -48,12 +48,17 @@ def generate_thumbnail(
 
     cmd = [
         "ffmpeg",
-        "-y",               # Overwrite output
-        "-ss", timestamp,   # Seek position
-        "-i", str(video_path.resolve()),
-        "-vframes", "1",    # Extract one frame
-        "-s", size,          # Output size
-        "-q:v", "3",         # JPEG quality (2-5 is good)
+        "-y",  # Overwrite output
+        "-ss",
+        timestamp,  # Seek position
+        "-i",
+        str(video_path.resolve()),
+        "-vframes",
+        "1",  # Extract one frame
+        "-s",
+        size,  # Output size
+        "-q:v",
+        "3",  # JPEG quality (2-5 is good)
         str(output_path),
     ]
 

@@ -62,9 +62,7 @@ class SettingsPage(QWidget):
 
         self._pause_combo = QComboBox()
         for cond in PauseCondition:
-            self._pause_combo.addItem(
-                cond.value.replace("_", " ").title(), cond.value
-            )
+            self._pause_combo.addItem(cond.value.replace("_", " ").title(), cond.value)
         playback_form.addRow("Pause video when:", self._pause_combo)
 
         self._mute_check = QCheckBox("Mute audio by default")
@@ -101,9 +99,7 @@ class SettingsPage(QWidget):
         self._blur_slider.setTickInterval(10)
         self._blur_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self._blur_label = QLabel("40")
-        self._blur_slider.valueChanged.connect(
-            lambda v: self._blur_label.setText(str(v))
-        )
+        self._blur_slider.valueChanged.connect(lambda v: self._blur_label.setText(str(v)))
         radius_layout.addWidget(self._blur_slider)
         radius_layout.addWidget(self._blur_label)
         blur_form.addRow("Blur radius:", radius_layout)
@@ -125,9 +121,7 @@ class SettingsPage(QWidget):
         self._battery_slider.setTickInterval(5)
         self._battery_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self._battery_label = QLabel("20%")
-        self._battery_slider.valueChanged.connect(
-            lambda v: self._battery_label.setText(f"{v}%")
-        )
+        self._battery_slider.valueChanged.connect(lambda v: self._battery_label.setText(f"{v}%"))
         threshold_layout.addWidget(self._battery_slider)
         threshold_layout.addWidget(self._battery_label)
         battery_form.addRow("Threshold:", threshold_layout)
@@ -138,9 +132,7 @@ class SettingsPage(QWidget):
         lock_group = QGroupBox("Lock Screen")
         lock_form = QFormLayout(lock_group)
 
-        self._sync_lock_check = QCheckBox(
-            "Sync desktop wallpaper to lock screen"
-        )
+        self._sync_lock_check = QCheckBox("Sync desktop wallpaper to lock screen")
         lock_form.addRow("", self._sync_lock_check)
 
         form_layout.addWidget(lock_group)
@@ -151,9 +143,7 @@ class SettingsPage(QWidget):
 
         self._monitor_combo = QComboBox()
         for mode in MonitorMode:
-            self._monitor_combo.addItem(
-                mode.value.replace("_", " ").title(), mode.value
-            )
+            self._monitor_combo.addItem(mode.value.replace("_", " ").title(), mode.value)
         monitor_form.addRow("Apply wallpaper to:", self._monitor_combo)
 
         form_layout.addWidget(monitor_group)
@@ -172,6 +162,12 @@ class SettingsPage(QWidget):
                 border-radius: 8px;
                 padding: 10px 20px;
                 font-size: 13px;
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: palette(text);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.14);
             }
         """)
         reset_btn.clicked.connect(self._reset_settings)
@@ -184,6 +180,12 @@ class SettingsPage(QWidget):
                 padding: 10px 20px;
                 font-size: 13px;
                 font-weight: bold;
+                background-color: #228be6;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #339af0;
             }
         """)
         save_btn.clicked.connect(self._save_settings)
@@ -221,17 +223,19 @@ class SettingsPage(QWidget):
     def _save_settings(self) -> None:
         """Save form values to config."""
         config = self._service.config
-        updated = config.model_copy(update={
-            "pause_condition": PauseCondition(self._pause_combo.currentData()),
-            "mute_by_default": self._mute_check.isChecked(),
-            "playback_speed": self._speed_slider.value() / 100.0,
-            "blur_enabled": self._blur_check.isChecked(),
-            "blur_radius": self._blur_slider.value(),
-            "battery_saver_enabled": self._battery_check.isChecked(),
-            "battery_threshold": self._battery_slider.value(),
-            "sync_lock_screen": self._sync_lock_check.isChecked(),
-            "monitor_mode": MonitorMode(self._monitor_combo.currentData()),
-        })
+        updated = config.model_copy(
+            update={
+                "pause_condition": PauseCondition(self._pause_combo.currentData()),
+                "mute_by_default": self._mute_check.isChecked(),
+                "playback_speed": self._speed_slider.value() / 100.0,
+                "blur_enabled": self._blur_check.isChecked(),
+                "blur_radius": self._blur_slider.value(),
+                "battery_saver_enabled": self._battery_check.isChecked(),
+                "battery_threshold": self._battery_slider.value(),
+                "sync_lock_screen": self._sync_lock_check.isChecked(),
+                "monitor_mode": MonitorMode(self._monitor_combo.currentData()),
+            }
+        )
         self._service.save_config(updated)
         QMessageBox.information(self, "Settings", "Settings saved successfully.")
 

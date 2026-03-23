@@ -72,9 +72,7 @@ class TestApplyDesktopWallpaper:
         with pytest.raises(FileNotFoundError):
             apply_desktop_wallpaper([Path("/nonexistent/video.mp4")])
 
-    def test_successful_apply(
-        self, sample_video: Path, mock_subprocess: MagicMock
-    ) -> None:
+    def test_successful_apply(self, sample_video: Path, mock_subprocess: MagicMock) -> None:
         # Should not raise
         apply_desktop_wallpaper([sample_video])
         mock_subprocess.assert_called_once()
@@ -84,9 +82,7 @@ class TestApplyDesktopWallpaper:
         assert args[0] == "qdbus"
         assert "org.kde.plasmashell" in args
 
-    def test_qdbus_failure(
-        self, sample_video: Path, mock_subprocess: MagicMock
-    ) -> None:
+    def test_qdbus_failure(self, sample_video: Path, mock_subprocess: MagicMock) -> None:
         mock_subprocess.return_value.returncode = 1
         mock_subprocess.return_value.stderr = "connection refused"
 

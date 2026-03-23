@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 
 from livepaper.models import SystemCheckItem, SystemStatus
 from livepaper.services.system_detector import detect_system_status
+from livepaper.ui.utils import open_url
 
 
 class _DetectionWorker(QThread):
@@ -71,6 +72,12 @@ class _CheckRow(QFrame):
                 border-radius: 6px;
                 padding: 6px 16px;
                 font-size: 12px;
+                background-color: #e67700;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #f08c00;
             }
         """)
         layout.addWidget(self._fix_button)
@@ -96,15 +103,8 @@ class _CheckRow(QFrame):
             if item.fix_url:
                 self._fix_button.setVisible(True)
                 self._fix_button.clicked.connect(
-                    lambda: _open_url(item.fix_url)
+                    lambda _checked=False, url=item.fix_url: open_url(url)
                 )
-
-
-def _open_url(url: str) -> None:
-    """Open a URL in the default browser."""
-    from PyQt6.QtCore import QUrl
-    from PyQt6.QtGui import QDesktopServices
-    QDesktopServices.openUrl(QUrl(url))
 
 
 class SetupWizardPage(QWidget):
@@ -166,6 +166,12 @@ class SetupWizardPage(QWidget):
                 border-radius: 8px;
                 padding: 10px 24px;
                 font-size: 14px;
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: palette(text);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.14);
             }
         """)
         self._recheck_btn.clicked.connect(self._run_checks)
@@ -180,6 +186,16 @@ class SetupWizardPage(QWidget):
                 padding: 10px 24px;
                 font-size: 14px;
                 font-weight: bold;
+                background-color: #228be6;
+                color: #ffffff;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #339af0;
+            }
+            QPushButton:disabled {
+                background-color: rgba(255, 255, 255, 0.06);
+                color: rgba(255, 255, 255, 0.3);
             }
         """)
         self._continue_btn.clicked.connect(self._on_continue_clicked)
