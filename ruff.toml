@@ -1,0 +1,32 @@
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",    # line too long (handled by formatter)
+    "N802",    # Qt override methods use camelCase (e.g. mousePressEvent)
+    "RUF001",  # intentional Unicode characters in UI labels
+    "RUF012",  # Qt class attributes are fine as mutable
+    "TC001",   # imports used at runtime in Pydantic/Qt code
+    "TC003",   # stdlib imports used at runtime (Path, Callable)
+]
+
+[lint.isort]
+known-first-party = ["livepaper"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

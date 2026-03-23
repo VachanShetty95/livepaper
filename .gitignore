@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Qt
+*.qmlc
+*.jsc
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Ruff / mypy
+.ruff_cache/
+.mypy_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App cache
+thumbnails/
+
+# ECC agent config
+.agent
