@@ -8,7 +8,7 @@ ApplicationWindow {
     visible: true
     width: 1280
     height: 800
-    title: "Livepaper IQON"
+    title: "Livepaper"
     color: "#0A0A0C"
 
     // Set default application font
@@ -28,39 +28,21 @@ ApplicationWindow {
             Layout.fillHeight: true
             color: "#0A0A0C"
 
-            ColumnLayout {
+            StackLayout {
                 anchors.fill: parent
-                anchors.margins: 32
-                spacing: 24
+                currentIndex: sidebar.activeItem === "Wallpapers" ? 0 :
+                              sidebar.activeItem === "Settings" ? 1 : 2
 
-                Label {
-                    text: sidebar.activeItem
-                    font.pixelSize: 28
-                    font.bold: true
-                    color: "white"
+                WallpapersPage {
+                    onWallpaperSelected: function(item) {
+                        actionPanel.selectedItem = item
+                    }
+                }
+                
+                SettingsPage {
                 }
 
-                GridView {
-                    id: grid
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    cellWidth: 260
-                    cellHeight: 180
-                    clip: true
-
-                    model: ListModel {
-                        ListElement { name: "Neon City Break" }
-                        ListElement { name: "Abstract Dimensions" }
-                        ListElement { name: "Cyberpunk 2077" }
-                        ListElement { name: "Dark Forest Minimal" }
-                        ListElement { name: "Quantum Fluctuations" }
-                        ListElement { name: "Deep Space Redux" }
-                    }
-
-                    delegate: WallpaperCard {
-                        wallpaperName: model.name
-                        onClicked: actionPanel.selectedItem = { "name": model.name, "imageSource": "" }
-                    }
+                AboutPage {
                 }
             }
         }

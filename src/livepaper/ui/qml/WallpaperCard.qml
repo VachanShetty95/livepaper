@@ -18,6 +18,19 @@ Rectangle {
     property string imageSource: ""
     property string wallpaperName: "Untitled"
     signal clicked()
+    signal removeClicked()
+
+    MouseArea {
+        id: hoverArea
+        anchors.fill: parent
+        hoverEnabled: true
+
+        onClicked: {
+            card.clicked()
+            // Ensure focus is dropped from buttons to root if needed
+            card.forceActiveFocus()
+        }
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -51,12 +64,40 @@ Rectangle {
                 width: parent.width - 24
             }
         }
+
+        // Close button at top right
+        Rectangle {
+            id: closeBtn
+            width: 28
+            height: 28
+            radius: 14
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 8
+            color: closeMouseArea.containsMouse ? "#ff6b6b" : "#B3141519"
+            border.color: "#1AFFFFFF"
+            border.width: 1
+            z: 10
+            
+            Text {
+                anchors.centerIn: parent
+                text: "✕"
+                color: "white"
+                font.pixelSize: 14
+                font.bold: true
+            }
+            
+            MouseArea {
+                id: closeMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                // Prevent click passing to main card hover area
+                propagateComposedEvents: false
+                onClicked: {
+                    card.removeClicked()
+                }
+            }
+        }
     }
 
-    MouseArea {
-        id: hoverArea
-        anchors.fill: parent
-        hoverEnabled: true
-        onClicked: card.clicked()
-    }
 }

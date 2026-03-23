@@ -8,6 +8,8 @@ Rectangle {
     Layout.fillHeight: true
     color: "#0A0A0C"
 
+    property string activeItem: "Wallpapers"
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 24
@@ -25,17 +27,20 @@ Rectangle {
         }
 
         // Navigation Items
-        property string activeItem: "Wallpapers"
 
         Repeater {
-            model: ["Wallpapers", "Settings", "About"]
+            model: [
+                { name: "Wallpapers", icon: "🖼️" },
+                { name: "Settings", icon: "⚙️" },
+                { name: "About", icon: "ℹ️" }
+            ]
             delegate: Rectangle {
                 id: navItem
                 width: parent.width
                 height: 48
                 radius: 24
                 
-                property bool isActive: sidebar.activeItem === modelData
+                property bool isActive: sidebar.activeItem === modelData.name
                 property bool isHovered: mouseArea.containsMouse
 
                 color: isActive ? "#1A00FFA3" : (isHovered ? "#141519" : "transparent")
@@ -45,16 +50,14 @@ Rectangle {
                     anchors.leftMargin: 20
                     spacing: 12
                     
-                    // A simple dot icon for demo
-                    Rectangle {
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: navItem.isActive ? "#00FFA3" : "#8A8D98"
+                    Text {
+                        text: modelData.icon
+                        font.pixelSize: 16
+                        opacity: navItem.isActive ? 1.0 : (navItem.isHovered ? 0.8 : 0.5)
                     }
 
                     Label {
-                        text: modelData
+                        text: modelData.name
                         font.pixelSize: 15
                         font.bold: navItem.isActive
                         color: navItem.isActive ? "#00FFA3" : (navItem.isHovered ? "white" : "#8A8D98")
@@ -65,7 +68,7 @@ Rectangle {
                     id: mouseArea
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: sidebar.activeItem = modelData
+                    onClicked: sidebar.activeItem = modelData.name
                 }
             }
         }

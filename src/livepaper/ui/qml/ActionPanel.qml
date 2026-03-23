@@ -43,11 +43,12 @@ Rectangle {
             border.width: 1
             clip: true
             
-            // Image {
-            //     anchors.fill: parent
-            //     source: actionPanel.selectedItem ? actionPanel.selectedItem.imageSource : ""
-            //     fillMode: Image.PreserveAspectCrop
-            // }
+            Image {
+                anchors.fill: parent
+                source: actionPanel.selectedItem ? actionPanel.selectedItem.imageSource : ""
+                fillMode: Image.PreserveAspectCrop
+                visible: actionPanel.selectedItem !== null && actionPanel.selectedItem.imageSource !== ""
+            }
 
             // Fallback content
             Label {
@@ -55,6 +56,7 @@ Rectangle {
                 text: "Preview"
                 color: "#8A8D98"
                 font.pixelSize: 16
+                visible: actionPanel.selectedItem === null || actionPanel.selectedItem.imageSource === ""
             }
         }
 
@@ -72,7 +74,7 @@ Rectangle {
             }
 
             Label {
-                text: "Resolution: 3840x2160\nFile Size: 12.4 MB"
+                text: "Resolution: 3840x2160\nFile Size: 12.4 MB" // Could be dynamic from python
                 font.pixelSize: 13
                 color: "#8A8D98"
                 lineHeight: 1.4
@@ -105,6 +107,11 @@ Rectangle {
                     border.width: 1
                     radius: 24
                 }
+                onClicked: {
+                    if (actionPanel.selectedItem) {
+                        appBridge.applyWallpaper(actionPanel.selectedItem.path, "desktop")
+                    }
+                }
             }
 
             Button {
@@ -127,6 +134,11 @@ Rectangle {
                     border.width: 1
                     radius: 24
                 }
+                onClicked: {
+                    if (actionPanel.selectedItem) {
+                        appBridge.applyWallpaper(actionPanel.selectedItem.path, "lock_screen")
+                    }
+                }
             }
 
             Button {
@@ -148,6 +160,11 @@ Rectangle {
                 background: Rectangle {
                     color: bothBtn.down ? Qt.darker("#00FFA3", 1.2) : "#00FFA3"
                     radius: 24
+                }
+                onClicked: {
+                    if (actionPanel.selectedItem) {
+                        appBridge.applyWallpaper(actionPanel.selectedItem.path, "both")
+                    }
                 }
             }
         }

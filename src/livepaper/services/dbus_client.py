@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess  # nosec B404
+import shutil
 from pathlib import Path
 
 
@@ -46,6 +47,14 @@ for (var i = 0; i < allDesktops.length; i++) {{
     return script
 
 
+def _get_qdbus_command() -> str:
+    """Resolve the right qdbus executable cross-system."""
+    for cmd in ["qdbus", "qdbus-qt6", "qdbus6"]:
+        if shutil.which(cmd):
+            return cmd
+    return "qdbus"
+
+
 def apply_desktop_wallpaper(
     video_paths: list[Path],
     screen_index: int = -1,
@@ -66,9 +75,11 @@ def apply_desktop_wallpaper(
             raise FileNotFoundError(msg)
 
     script = _build_wallpaper_script(video_paths, screen_index)
+    
+    qdbus_cmd = _get_qdbus_command()
 
     cmd = [
-        "qdbus",
+        qdbus_cmd,
         "org.kde.plasmashell",
         "/PlasmaShell",
         "org.kde.PlasmaShell.evaluateScript",
@@ -108,8 +119,9 @@ def get_evaluate_script_command(
         The command as a list of strings.
     """
     script = _build_wallpaper_script(video_paths, screen_index)
+    qdbus_cmd = _get_qdbus_command()
     return [
-        "qdbus",
+        qdbus_cmd,
         "org.kde.plasmashell",
         "/PlasmaShell",
         "org.kde.PlasmaShell.evaluateScript",
