@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Livepaper
+Comment=Video wallpaper manager for KDE Plasma 6
+Exec=livepaper
+Icon=livepaper
+Terminal=false
+Type=Application
+Categories=Settings;DesktopSettings;Qt;KDE;
+Keywords=wallpaper;video;desktop;plasma;
+StartupNotify=true
+X-KDE-StartupNotify=true
