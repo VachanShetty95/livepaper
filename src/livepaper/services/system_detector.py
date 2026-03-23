@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 from livepaper.models import SystemStatus
@@ -12,7 +12,7 @@ from livepaper.models import SystemStatus
 def _run_command(cmd: list[str], timeout: int = 5) -> str | None:
     """Run a command and return stdout, or None on failure."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             cmd,
             capture_output=True,
             text=True,

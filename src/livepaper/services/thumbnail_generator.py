@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 CACHE_DIR = Path.home() / ".cache" / "livepaper" / "thumbnails"
@@ -58,7 +58,7 @@ def generate_thumbnail(
     ]
 
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             cmd,
             capture_output=True,
             text=True,
