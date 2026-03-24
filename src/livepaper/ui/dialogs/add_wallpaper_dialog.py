@@ -11,22 +11,11 @@ ALL_EXTENSIONS = "All Files (*)"
 
 
 def open_add_wallpaper_dialog(parent: QWidget | None = None) -> list[Path]:
-    """Open a native file dialog to select video files.
-
-    Returns:
-        List of selected Paths, or empty list if cancelled.
-    """
+    """Open a native file dialog to select video files."""
     file_paths, _ = QFileDialog.getOpenFileNames(
         parent,
         "Add Video Wallpapers",
         str(Path.home()),
         f"{VIDEO_EXTENSIONS};;{ALL_EXTENSIONS}",
     )
-
-    result: list[Path] = []
-    for fp in file_paths:
-        p = Path(fp)
-        if p.exists() and p.is_file():
-            result.append(p)
-
-    return result
+    return [p for fp in file_paths if (p := Path(fp)).exists() and p.is_file()]

@@ -39,13 +39,11 @@ class MainWindow(QMainWindow):
         self._navigate_to_initial_page()
 
     def _setup_window(self) -> None:
-        """Configure the main window properties."""
         self.setWindowTitle("Livepaper")
         self.setMinimumSize(900, 600)
         self.resize(1100, 700)
 
     def _setup_ui(self) -> None:
-        """Build the sidebar + stacked content layout."""
         central = QWidget()
         self.setCentralWidget(central)
 
@@ -53,7 +51,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # --- Sidebar ---
+        # Sidebar
         self._sidebar = QListWidget()
         self._sidebar.setFixedWidth(200)
         self._sidebar.setIconSize(QSize(20, 20))
@@ -82,7 +80,7 @@ class MainWindow(QMainWindow):
         self._sidebar.currentRowChanged.connect(self._on_nav_changed)
         layout.addWidget(self._sidebar)
 
-        # --- Content Area ---
+        # Content area
         self._pages = QStackedWidget()
 
         self._setup_wizard = SetupWizardPage(on_continue=self._on_wizard_continue)
@@ -90,41 +88,36 @@ class MainWindow(QMainWindow):
         self._settings_page = SettingsPage(service=self._service)
         self._about_page = AboutPage()
 
-        self._pages.addWidget(self._setup_wizard)  # index 0 = Home
-        self._pages.addWidget(self._library_view)  # index 1 = Wallpapers
-        self._pages.addWidget(self._settings_page)  # index 2 = Settings
-        self._pages.addWidget(self._about_page)  # index 3 = About
+        self._pages.addWidget(self._setup_wizard)   # 0 = Home
+        self._pages.addWidget(self._library_view)   # 1 = Wallpapers
+        self._pages.addWidget(self._settings_page)  # 2 = Settings
+        self._pages.addWidget(self._about_page)     # 3 = About
 
         layout.addWidget(self._pages, 1)
 
     def _setup_shortcuts(self) -> None:
-        """Register keyboard shortcuts."""
         add_action = QAction("Add Wallpaper", self)
         add_action.setShortcut(QKeySequence("Ctrl+N"))
         add_action.triggered.connect(self._on_add_shortcut)
         self.addAction(add_action)
 
     def _navigate_to_initial_page(self) -> None:
-        """Show wizard on first run, otherwise go to library."""
         config = self._service.config
         if config.first_run_complete:
-            self._sidebar.setCurrentRow(1)  # Wallpapers
+            self._sidebar.setCurrentRow(1)
         else:
-            self._sidebar.setCurrentRow(0)  # Home (wizard)
+            self._sidebar.setCurrentRow(0)
 
     def _on_nav_changed(self, index: int) -> None:
-        """Handle sidebar navigation clicks."""
         if 0 <= index < self._pages.count():
             self._pages.setCurrentIndex(index)
 
     def _on_wizard_continue(self) -> None:
-        """Called when the setup wizard is completed."""
         config = self._service.config
         updated = config.model_copy(update={"first_run_complete": True})
         self._service.save_config(updated)
-        self._sidebar.setCurrentRow(1)  # Navigate to Wallpapers
+        self._sidebar.setCurrentRow(1)
 
     def _on_add_shortcut(self) -> None:
-        """Handle Ctrl+N shortcut to add wallpaper."""
-        self._sidebar.setCurrentRow(1)  # Go to library
+        self._sidebar.setCurrentRow(1)
         self._library_view.open_add_dialog()

@@ -20,8 +20,6 @@ from livepaper.ui.utils import open_url
 
 
 class _DetectionWorker(QThread):
-    """Background thread for system detection."""
-
     finished = pyqtSignal(SystemStatus)
 
     def run(self) -> None:
@@ -30,18 +28,10 @@ class _DetectionWorker(QThread):
 
 
 class _CheckRow(QFrame):
-    """A single status row in the health check."""
-
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setStyleSheet("""
-            QFrame {
-                border-radius: 8px;
-                padding: 12px 16px;
-                margin: 4px 0;
-            }
-        """)
+        self.setStyleSheet("QFrame { border-radius: 8px; }")
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
@@ -59,7 +49,7 @@ class _CheckRow(QFrame):
         text_layout.addWidget(self._name_label)
 
         self._status_label = QLabel()
-        self._status_label.setStyleSheet("font-size: 12px; opacity: 0.7;")
+        self._status_label.setStyleSheet("font-size: 12px; color: palette(mid);")
         text_layout.addWidget(self._status_label)
 
         layout.addLayout(text_layout, 1)
@@ -69,30 +59,21 @@ class _CheckRow(QFrame):
         self._fix_button.setVisible(False)
         self._fix_button.setStyleSheet("""
             QPushButton {
-                border-radius: 6px;
-                padding: 6px 16px;
-                font-size: 12px;
-                background-color: #e67700;
-                color: #ffffff;
-                border: none;
+                border-radius: 6px; padding: 6px 16px; font-size: 12px;
+                background-color: #e67700; color: #ffffff; border: none;
             }
-            QPushButton:hover {
-                background-color: #f08c00;
-            }
+            QPushButton:hover { background-color: #f08c00; }
         """)
         layout.addWidget(self._fix_button)
 
     def set_loading(self, name: str) -> None:
-        """Show loading state."""
         self._name_label.setText(name)
         self._icon_label.setText("⏳")
         self._status_label.setText("Checking...")
         self._fix_button.setVisible(False)
 
     def set_result(self, item: SystemCheckItem) -> None:
-        """Update with check result."""
         self._name_label.setText(item.name)
-
         if item.passed:
             self._icon_label.setText("✅")
             self._status_label.setText(item.message)
@@ -108,8 +89,6 @@ class _CheckRow(QFrame):
 
 
 class SetupWizardPage(QWidget):
-    """First-run setup wizard with system health checks."""
-
     def __init__(
         self,
         on_continue: Callable[[], None] | None = None,
@@ -122,30 +101,27 @@ class SetupWizardPage(QWidget):
         self._run_checks()
 
     def _setup_ui(self) -> None:
-        """Build the wizard layout."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(48, 48, 48, 48)
         layout.setSpacing(16)
 
-        # Header
         title = QLabel("Welcome to Livepaper")
         title.setStyleSheet("font-size: 28px; font-weight: bold;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
         subtitle = QLabel("Let's make sure everything is set up correctly.")
-        subtitle.setStyleSheet("font-size: 14px; opacity: 0.7;")
+        subtitle.setStyleSheet("font-size: 14px; color: palette(mid);")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(subtitle)
 
         layout.addSpacing(24)
 
-        # Check rows
         self._check_rows: list[_CheckRow] = []
         check_names = [
             "KDE Plasma 6",
             "Smart Video Wallpaper Plugin",
-            "Media Codecs (qt6-multimedia-ffmpeg)",
+            "Media codecs (qt6-multimedia-ffmpeg)",
         ]
         for name in check_names:
             row = _CheckRow()
@@ -155,25 +131,11 @@ class SetupWizardPage(QWidget):
 
         layout.addStretch(1)
 
-        # Footer buttons
         footer = QHBoxLayout()
         footer.addStretch(1)
 
         self._recheck_btn = QPushButton("Re-check")
         self._recheck_btn.setFixedWidth(120)
-        self._recheck_btn.setStyleSheet("""
-            QPushButton {
-                border-radius: 8px;
-                padding: 10px 24px;
-                font-size: 14px;
-                background-color: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                color: palette(text);
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.14);
-            }
-        """)
         self._recheck_btn.clicked.connect(self._run_checks)
         footer.addWidget(self._recheck_btn)
 
@@ -182,20 +144,12 @@ class SetupWizardPage(QWidget):
         self._continue_btn.setEnabled(False)
         self._continue_btn.setStyleSheet("""
             QPushButton {
-                border-radius: 8px;
-                padding: 10px 24px;
-                font-size: 14px;
-                font-weight: bold;
-                background-color: #228be6;
-                color: #ffffff;
-                border: none;
+                border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: bold;
+                background-color: #228be6; color: #ffffff; border: none;
             }
-            QPushButton:hover {
-                background-color: #339af0;
-            }
+            QPushButton:hover { background-color: #339af0; }
             QPushButton:disabled {
-                background-color: rgba(255, 255, 255, 0.06);
-                color: rgba(255, 255, 255, 0.3);
+                background-color: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3);
             }
         """)
         self._continue_btn.clicked.connect(self._on_continue_clicked)
@@ -204,26 +158,19 @@ class SetupWizardPage(QWidget):
         layout.addLayout(footer)
 
     def _run_checks(self) -> None:
-        """Start system detection in a background thread."""
         self._continue_btn.setEnabled(False)
         for row in self._check_rows:
             row.set_loading(row._name_label.text())
-
         self._worker = _DetectionWorker()
         self._worker.finished.connect(self._on_checks_complete)
         self._worker.start()
 
     def _on_checks_complete(self, status: SystemStatus) -> None:
-        """Handle detection results."""
         self._status = status
-        items = status.to_check_items()
-
-        for row, item in zip(self._check_rows, items, strict=True):
+        for row, item in zip(self._check_rows, status.to_check_items(), strict=True):
             row.set_result(item)
-
         self._continue_btn.setEnabled(status.all_checks_passed)
 
     def _on_continue_clicked(self) -> None:
-        """Handle the continue button."""
         if self._on_continue:
             self._on_continue()
