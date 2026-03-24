@@ -25,7 +25,7 @@ from livepaper.services.config_manager import (
 )
 from livepaper.services.system_detector import detect_system_status
 from livepaper.services.wallpaper_service import WallpaperService, WallpaperTarget
-from livepaper.ui.dialogs.add_wallpaper_dialog import open_add_wallpaper_dialog
+from PyQt6.QtWidgets import QFileDialog
 from livepaper.ui.utils import open_url
 
 
@@ -148,8 +148,12 @@ class AppBridge(QObject):
     @pyqtSlot()
     def openAddDialog(self) -> None:
         """Open the add wallpaper file picker."""
-        # QFileDialog works without a parent widget, passing None.
-        paths = open_add_wallpaper_dialog(None)
+        paths, _ = QFileDialog.getOpenFileNames(
+            None,
+            "Select Wallpapers",
+            "",
+            "Video Files (*.mp4 *.webm *.mkv);;All Files (*)",
+        )
         if paths:
             print(f"Adding wallpapers: {paths}")
             add_wallpapers_to_library(paths)
