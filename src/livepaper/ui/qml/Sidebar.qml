@@ -8,7 +8,7 @@ Rectangle {
     Layout.fillHeight: true
     color: "#0A0A0C"
 
-    property string activeItem: "Wallpapers"
+    property string activeItem: "Home"
 
     ColumnLayout {
         anchors.fill: parent
@@ -30,6 +30,7 @@ Rectangle {
 
         Repeater {
             model: [
+                { name: "Home", icon: "🏠" },
                 { name: "Wallpapers", icon: "🖼️" },
                 { name: "Settings", icon: "⚙️" },
                 { name: "About", icon: "ℹ️" }
@@ -52,15 +53,17 @@ Rectangle {
                     
                     Text {
                         text: modelData.icon
-                        font.pixelSize: 16
+                        font.pixelSize: 20
                         opacity: navItem.isActive ? 1.0 : (navItem.isHovered ? 0.8 : 0.5)
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
                     Label {
                         text: modelData.name
-                        font.pixelSize: 15
+                        font.pixelSize: 18
                         font.bold: navItem.isActive
                         color: navItem.isActive ? "#00FFA3" : (navItem.isHovered ? "white" : "#8A8D98")
+                        Layout.alignment: Qt.AlignVCenter
                     }
                 }
 

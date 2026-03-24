@@ -2,29 +2,45 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, QThread, pyqtProperty, pyqtSignal, pyqtSlot
 
+from livepaper.models import SystemStatus
 from livepaper.services.config_manager import (
     add_wallpapers_to_library,
     remove_wallpaper_from_library,
 )
+from livepaper.services.system_detector import detect_system_status
 from livepaper.services.wallpaper_service import WallpaperService, WallpaperTarget
 from livepaper.ui.dialogs.add_wallpaper_dialog import open_add_wallpaper_dialog
 from livepaper.ui.utils import open_url
 
 
+class _DetectionWorker(QThread):
+    finished = pyqtSignal(SystemStatus)
+
+    def __init__(self, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+
+    def run(self) -> None:
+        status = detect_system_status()
+        self.finished.emit(status)
+
+
 class AppBridge(QObject):
     """Bridge converting Python backend calls to QML interface."""
 
-    wallpapersChanged = pyqtSignal()
-    configChanged = pyqtSignal()
-    errorOccurred = pyqtSignal(str, str)
+    wallpapersChanged = pyqtSignal()  # noqa: N815
+    configChanged = pyqtSignal()  # noqa: N815
+    errorOccurred = pyqtSignal(str, str)  # noqa: N815
+    systemCheckCompleted = pyqtSignal("QVariantList")  # noqa: N815
 
     def __init__(self, service: WallpaperService, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._service = service
+        self._check_worker: _DetectionWorker | None = None
 
     @pyqtSlot()
     def openAddDialog(self) -> None:
@@ -39,9 +55,11 @@ class AppBridge(QObject):
 
             # Start background thumbnail generation
             import threading
-            from livepaper.services.thumbnail_generator import generate_thumbnail
+
             from PyQt6.QtCore import QTimer
-            
+
+            from livepaper.services.thumbnail_generator import generate_thumbnail
+
             def worker():
                 updated = False
                 for w in self._service.config.wallpapers:
@@ -54,10 +72,10 @@ class AppBridge(QObject):
                                 updated = True
                         except Exception as e:
                             print(f"Thumbnail failed for {w.path}: {e}")
-                
+
                 if updated:
                     self._service.save_config(self._service.config)
-                    
+
                 # Reload config and signal correctly from the main thread
                 def _update():
                     self._service.reload_config()
@@ -115,7 +133,7 @@ class AppBridge(QObject):
             print(f"Received request to apply: {path_str} to {target_str}")
             target = WallpaperTarget(target_str)
             self._service.apply_wallpaper([Path(path_str)], target)
-            print(f"Applied successfully.")
+            print("Applied successfully.")
         except Exception as e:
             print(f"Failed to apply wallpaper: {e}")
             self.errorOccurred.emit("Failed to apply wallpaper", str(e))
@@ -124,3 +142,30 @@ class AppBridge(QObject):
     def openUrl(self, url: str) -> None:
         """Open a system URL."""
         open_url(url)
+
+    @pyqtProperty(str)
+    def username(self) -> str:
+        """Return the current system username."""
+        return os.environ.get("USER", os.environ.get("USERNAME", "User"))
+
+    @pyqtSlot()
+    def runSystemCheck(self) -> None:
+        """Run system check in background and emit results."""
+        worker = _DetectionWorker(self)
+        self._check_worker = worker
+        worker.finished.connect(self._on_check_finished)
+        worker.start()
+
+    def _on_check_finished(self, status: SystemStatus) -> None:
+        """Process result and emit to QML."""
+        items = status.to_check_items()
+        res = [
+            {
+                "name": item.name,
+                "passed": item.passed,
+                "message": item.message,
+                "fix_url": item.fix_url,
+            }
+            for item in items
+        ]
+        self.systemCheckCompleted.emit(res)

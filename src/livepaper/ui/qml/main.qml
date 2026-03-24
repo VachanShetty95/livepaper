@@ -30,8 +30,13 @@ ApplicationWindow {
 
             StackLayout {
                 anchors.fill: parent
-                currentIndex: sidebar.activeItem === "Wallpapers" ? 0 :
-                              sidebar.activeItem === "Settings" ? 1 : 2
+                currentIndex: sidebar.activeItem === "Home" ? 0 :
+                              sidebar.activeItem === "Wallpapers" ? 1 :
+                              sidebar.activeItem === "Settings" ? 2 : 3
+
+                HomePage {
+                    onContinueClicked: sidebar.activeItem = "Wallpapers"
+                }
 
                 WallpapersPage {
                     onWallpaperSelected: function(item) {
@@ -50,6 +55,7 @@ ApplicationWindow {
         ActionPanel {
             id: actionPanel
             Layout.preferredWidth: 300
+            visible: sidebar.activeItem === "Wallpapers"
         }
     }
 }
