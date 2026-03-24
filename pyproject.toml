@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
     "PyQt6>=6.6.0",
     "pydantic>=2.0.0",
+    "pyqt6-stubs>=20250824",
 ]
 
 [project.optional-dependencies]
