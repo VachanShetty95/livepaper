@@ -10,19 +10,15 @@ from livepaper.ui.utils import open_url
 
 
 class AboutPage(QWidget):
-    """About page showing app information and credits."""
-
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Build the about page layout."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(48, 48, 48, 48)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # App icon placeholder
         icon_label = QLabel("🎬")
         icon_label.setStyleSheet("font-size: 64px;")
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -30,21 +26,18 @@ class AboutPage(QWidget):
 
         layout.addSpacing(16)
 
-        # App name
         name_label = QLabel(__app_name__)
         name_label.setStyleSheet("font-size: 28px; font-weight: bold;")
         name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(name_label)
 
-        # Version
         version_label = QLabel(f"Version {__version__}")
-        version_label.setStyleSheet("font-size: 14px; opacity: 0.6;")
+        version_label.setStyleSheet("font-size: 14px; color: palette(mid);")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(version_label)
 
         layout.addSpacing(24)
 
-        # Description
         desc = QLabel(
             "A polished video wallpaper manager for KDE Plasma 6.\n"
             "Built on top of Smart Video Wallpaper Reborn."
@@ -56,59 +49,35 @@ class AboutPage(QWidget):
 
         layout.addSpacing(24)
 
-        # Credits
         credits_label = QLabel("Plugin by Luis Bocanegra\nApp by Vachan Shetty")
-        credits_label.setStyleSheet("font-size: 12px; opacity: 0.6;")
+        credits_label.setStyleSheet("font-size: 12px; color: palette(mid);")
         credits_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(credits_label)
 
         layout.addSpacing(16)
 
-        # License
         license_label = QLabel("Licensed under the MIT License")
-        license_label.setStyleSheet("font-size: 12px; opacity: 0.5;")
+        license_label.setStyleSheet("font-size: 12px; color: palette(mid);")
         license_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(license_label)
 
         layout.addSpacing(24)
 
-        # Link buttons
-        github_btn = QPushButton("📂  View on GitHub")
-        github_btn.setFixedWidth(200)
-        github_btn.setStyleSheet("""
-            QPushButton {
-                border-radius: 8px;
-                padding: 10px 20px;
-                font-size: 13px;
-                background-color: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                color: palette(text);
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.14);
-            }
-        """)
-        github_btn.clicked.connect(lambda: open_url("https://github.com/VachanShetty95/livepaper"))
-        layout.addWidget(github_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        plugin_btn = QPushButton("🔌  Plugin Repository")
-        plugin_btn.setFixedWidth(200)
-        plugin_btn.setStyleSheet("""
-            QPushButton {
-                border-radius: 8px;
-                padding: 10px 20px;
-                font-size: 13px;
-                background-color: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                color: palette(text);
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.14);
-            }
-        """)
-        plugin_btn.clicked.connect(
-            lambda: open_url("https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn")
-        )
-        layout.addWidget(plugin_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        for text, url in [
+            ("📂  View on GitHub", "https://github.com/VachanShetty95/livepaper"),
+            ("🔌  Plugin repository", "https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn"),
+        ]:
+            btn = QPushButton(text)
+            btn.setFixedWidth(220)
+            btn.setStyleSheet("""
+                QPushButton {
+                    border-radius: 8px; padding: 10px 20px; font-size: 13px;
+                    background-color: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.15); color: palette(text);
+                }
+                QPushButton:hover { background-color: rgba(255,255,255,0.14); }
+            """)
+            btn.clicked.connect(lambda _=False, u=url: open_url(u))
+            layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addStretch(1)

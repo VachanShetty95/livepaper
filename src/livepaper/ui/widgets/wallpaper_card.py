@@ -18,10 +18,7 @@ from livepaper.models import WallpaperEntry
 
 
 class WallpaperCard(QFrame):
-    """A single wallpaper card in the library grid.
-
-    Displays a thumbnail, filename, and provides click/context-menu interactions.
-    """
+    """A single wallpaper card in the library grid."""
 
     CARD_WIDTH = 200
     CARD_HEIGHT = 160
@@ -32,11 +29,7 @@ class WallpaperCard(QFrame):
     apply_desktop_requested = pyqtSignal(WallpaperEntry)
     apply_lockscreen_requested = pyqtSignal(WallpaperEntry)
 
-    def __init__(
-        self,
-        entry: WallpaperEntry,
-        parent: QWidget | None = None,
-    ) -> None:
+    def __init__(self, entry: WallpaperEntry, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._entry = entry
         self._selected = False
@@ -44,11 +37,9 @@ class WallpaperCard(QFrame):
 
     @property
     def entry(self) -> WallpaperEntry:
-        """Return the wallpaper entry for this card."""
         return self._entry
 
     def _setup_ui(self) -> None:
-        """Build the card layout."""
         self.setFixedSize(self.CARD_WIDTH, self.CARD_HEIGHT)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFrameShape(QFrame.Shape.StyledPanel)
@@ -58,34 +49,22 @@ class WallpaperCard(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Thumbnail
         self._thumb_label = QLabel()
         self._thumb_label.setFixedHeight(self.THUMB_HEIGHT)
         self._thumb_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._thumb_label.setStyleSheet("""
-            QLabel {
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-            }
+            QLabel { border-top-left-radius: 8px; border-top-right-radius: 8px; }
         """)
         self._set_thumbnail()
         layout.addWidget(self._thumb_label)
 
-        # Name label
         name_label = QLabel(self._entry.name)
         name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        name_label.setStyleSheet("""
-            QLabel {
-                padding: 8px 6px;
-                font-size: 12px;
-                font-weight: 500;
-            }
-        """)
+        name_label.setStyleSheet("padding: 8px 6px; font-size: 12px; font-weight: 500;")
         name_label.setWordWrap(False)
         layout.addWidget(name_label)
 
     def _set_thumbnail(self) -> None:
-        """Load and display the thumbnail image."""
         if self._entry.thumbnail_path and self._entry.thumbnail_path.exists():
             pixmap = QPixmap(str(self._entry.thumbnail_path))
             scaled = pixmap.scaled(
@@ -99,56 +78,45 @@ class WallpaperCard(QFrame):
             self._thumb_label.setStyleSheet("""
                 QLabel {
                     font-size: 36px;
-                    border-top-left-radius: 8px;
-                    border-top-right-radius: 8px;
+                    border-top-left-radius: 8px; border-top-right-radius: 8px;
                 }
             """)
 
     def _apply_style(self, *, selected: bool) -> None:
-        """Apply visual style based on selection state."""
         border = "2px solid palette(highlight)" if selected else "1px solid palette(mid)"
         self.setStyleSheet(f"""
-            WallpaperCard {{
-                border: {border};
-                border-radius: 10px;
-            }}
-            WallpaperCard:hover {{
-                border: 2px solid palette(highlight);
-            }}
+            WallpaperCard {{ border: {border}; border-radius: 10px; }}
+            WallpaperCard:hover {{ border: 2px solid palette(highlight); }}
         """)
 
     def set_selected(self, selected: bool) -> None:
-        """Toggle the selected visual state."""
         self._selected = selected
         self._apply_style(selected=selected)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
-        """Emit clicked signal on left click."""
         self.clicked.emit(self._entry)
         super().mousePressEvent(event)
 
     def contextMenuEvent(self, event: QContextMenuEvent | None) -> None:
-        """Show right-click context menu."""
         menu = QMenu(self)
 
-        apply_desktop = QAction("Apply to Desktop", self)
-        apply_desktop.triggered.connect(lambda: self.apply_desktop_requested.emit(self._entry))
-        menu.addAction(apply_desktop)
+        a1 = QAction("Apply to desktop", self)
+        a1.triggered.connect(lambda: self.apply_desktop_requested.emit(self._entry))
+        menu.addAction(a1)
 
-        apply_lock = QAction("Apply to Lock Screen", self)
-        apply_lock.triggered.connect(lambda: self.apply_lockscreen_requested.emit(self._entry))
-        menu.addAction(apply_lock)
+        a2 = QAction("Apply to lock screen", self)
+        a2.triggered.connect(lambda: self.apply_lockscreen_requested.emit(self._entry))
+        menu.addAction(a2)
 
         menu.addSeparator()
 
-        remove_action = QAction("Remove from Library", self)
-        remove_action.triggered.connect(lambda: self.remove_requested.emit(self._entry))
-        menu.addAction(remove_action)
+        a3 = QAction("Remove from library", self)
+        a3.triggered.connect(lambda: self.remove_requested.emit(self._entry))
+        menu.addAction(a3)
 
         if event is not None:
             menu.exec(event.globalPos())
 
     def update_thumbnail(self, thumbnail_path: Path) -> None:
-        """Update the card's thumbnail after background generation."""
         self._entry = self._entry.model_copy(update={"thumbnail_path": thumbnail_path})
         self._set_thumbnail()
