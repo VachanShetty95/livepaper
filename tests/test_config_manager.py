@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from livepaper.models import AppConfig, WallpaperEntry
+from livepaper.models import AppConfig, BlurMode, FillMode, PauseMode, PlaybackConfig, VideoConfig, WallpaperEntry
 from livepaper.services.config_manager import (
     add_wallpapers_to_library,
     apply_lock_screen_wallpaper,
@@ -12,18 +12,19 @@ from livepaper.services.config_manager import (
     remove_wallpaper_from_library,
     write_app_config,
 )
+from livepaper.services.dbus_client import PLUGIN_ID
 
 
 class TestAppConfigReadWrite:
-    """Tests for config file read/write."""
-
     def test_write_and_read(self, tmp_config_file: Path) -> None:
-        config = AppConfig(mute_by_default=True, playback_speed=1.5)
+        config = AppConfig()
+        config = config.model_copy(update={
+            "playback": PlaybackConfig(mute_audio=True, playback_rate=1.5),
+        })
         write_app_config(config, tmp_config_file)
-
         loaded = read_app_config(tmp_config_file)
-        assert loaded.mute_by_default is True
-        assert loaded.playback_speed == 1.5
+        assert loaded.playback.mute_audio is True
+        assert loaded.playback.playback_rate == 1.5
 
     def test_read_nonexistent_returns_default(self, tmp_path: Path) -> None:
         config = read_app_config(tmp_path / "nonexistent.json")
@@ -43,38 +44,87 @@ class TestAppConfigReadWrite:
         entry = WallpaperEntry(path=sample_video, name="Test")
         config = AppConfig(wallpapers=[entry])
         write_app_config(config, tmp_config_file)
-
         loaded = read_app_config(tmp_config_file)
         assert len(loaded.wallpapers) == 1
         assert loaded.wallpapers[0].name == "Test"
 
+    def test_video_config_roundtrip(self, tmp_config_file: Path) -> None:
+        config = AppConfig(video=VideoConfig(
+            fill_mode=FillMode.STRETCH,
+            pause_mode=PauseMode.ACTIVE_WINDOW,
+            blur_mode=BlurMode.ALWAYS,
+            blur_radius=75,
+            battery_threshold=30,
+        ))
+        write_app_config(config, tmp_config_file)
+        loaded = read_app_config(tmp_config_file)
+        assert loaded.video.fill_mode == FillMode.STRETCH
+        assert loaded.video.pause_mode == PauseMode.ACTIVE_WINDOW
+        assert loaded.video.blur_mode == BlurMode.ALWAYS
+        assert loaded.video.blur_radius == 75
+        assert loaded.video.battery_threshold == 30
+
+    def test_playback_config_roundtrip(self, tmp_config_file: Path) -> None:
+        config = AppConfig(playback=PlaybackConfig(
+            volume=60,
+            random_order=True,
+            fade_enabled=True,
+            fade_duration=2500,
+            timer=30,
+        ))
+        write_app_config(config, tmp_config_file)
+        loaded = read_app_config(tmp_config_file)
+        assert loaded.playback.volume == 60
+        assert loaded.playback.random_order is True
+        assert loaded.playback.fade_enabled is True
+        assert loaded.playback.fade_duration == 2500
+        assert loaded.playback.timer == 30
+
 
 class TestLockScreenWallpaper:
-    """Tests for kscreenlockerrc editing."""
-
-    def test_creates_file(self, tmp_path: Path, sample_video: Path) -> None:
+    def test_creates_file_with_correct_plugin_id(self, tmp_path: Path, sample_video: Path) -> None:
         config_path = tmp_path / "kscreenlockerrc"
-        apply_lock_screen_wallpaper([sample_video], config_path)
-
-        assert config_path.exists()
+        apply_lock_screen_wallpaper([sample_video], kscreenlocker_path=config_path)
         content = config_path.read_text(encoding="utf-8")
-        assert "smart-video-wallpaper-reborn" in content
+        # Must use full dotted plugin ID — short ID causes black screen
+        assert PLUGIN_ID in content
+        assert "smart-video-wallpaper-reborn" not in content.replace(PLUGIN_ID, "")
+
+    def test_video_urls_written(self, tmp_path: Path, sample_video: Path) -> None:
+        config_path = tmp_path / "kscreenlockerrc"
+        apply_lock_screen_wallpaper([sample_video], kscreenlocker_path=config_path)
+        content = config_path.read_text(encoding="utf-8")
         assert "VideoUrls" in content
         assert str(sample_video.resolve()) in content
 
-    def test_preserves_existing_content(self, tmp_path: Path, sample_video: Path) -> None:
+    def test_settings_written_when_config_provided(self, tmp_path: Path, sample_video: Path) -> None:
         config_path = tmp_path / "kscreenlockerrc"
-        config_path.write_text(
-            "[SomeOtherSection]\nSomeKey=SomeValue\n",
-            encoding="utf-8",
+        config = AppConfig(
+            video=VideoConfig(
+                fill_mode=FillMode.PRESERVE_ASPECT_FIT,
+                pause_mode=PauseMode.ACTIVE_WINDOW,
+                blur_mode=BlurMode.ALWAYS,
+                blur_radius=60,
+            ),
+            playback=PlaybackConfig(volume=75, random_order=True),
         )
+        apply_lock_screen_wallpaper([sample_video], config=config, kscreenlocker_path=config_path)
+        content = config_path.read_text(encoding="utf-8")
+        assert "FillMode" in content
+        assert "PauseMode" in content
+        assert "BlurMode" in content
+        assert "BlurRadius" in content
+        assert "Volume" in content
+        assert "RandomOrder" in content
 
-        apply_lock_screen_wallpaper([sample_video], config_path)
-
+    def test_preserves_existing_sections(self, tmp_path: Path, sample_video: Path) -> None:
+        config_path = tmp_path / "kscreenlockerrc"
+        config_path.write_text("[SomeOtherSection]\nSomeKey=SomeValue\n", encoding="utf-8")
+        apply_lock_screen_wallpaper([sample_video], kscreenlocker_path=config_path)
         content = config_path.read_text(encoding="utf-8")
         assert "SomeOtherSection" in content
         assert "SomeKey" in content
-        assert "smart-video-wallpaper-reborn" in content
+        assert PLUGIN_ID in content
 
     def test_multiple_videos(self, tmp_path: Path) -> None:
         config_path = tmp_path / "kscreenlockerrc"
@@ -83,15 +133,12 @@ class TestLockScreenWallpaper:
             v = tmp_path / name
             v.write_bytes(b"\x00")
             videos.append(v)
-
-        apply_lock_screen_wallpaper(videos, config_path)
+        apply_lock_screen_wallpaper(videos, kscreenlocker_path=config_path)
         content = config_path.read_text(encoding="utf-8")
         assert content.count("file://") == 2
 
 
 class TestLibraryManagement:
-    """Tests for adding/removing wallpapers from library."""
-
     def test_add_wallpapers(self, tmp_config_file: Path, sample_video: Path) -> None:
         config = add_wallpapers_to_library([sample_video], tmp_config_file)
         assert len(config.wallpapers) == 1
