@@ -33,11 +33,9 @@ package() {
     cd "${pkgname}-${pkgver}"
     python -m installer --destdir="${pkgdir}" dist/*.whl
 
-    # Install .desktop file
     install -Dm644 resources/livepaper.desktop \
         "${pkgdir}/usr/share/applications/livepaper.desktop"
 
-    # Install license
     install -Dm644 LICENSE \
         "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
