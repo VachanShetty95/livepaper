@@ -4,11 +4,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: actionPanel
-    width: 320
+    width: 360
     Layout.fillHeight: true
     color: "#0A0A0C"
     
-    // Optional left border separator
     Rectangle {
         width: 1
         anchors.left: parent.left
@@ -19,168 +18,360 @@ Rectangle {
 
     property var selectedItem: null
     
-    ColumnLayout {
+    ScrollView {
         anchors.fill: parent
-        anchors.margins: 24
-        spacing: 24
-        visible: selectedItem !== null
+        clip: true
         
-        Label {
-            text: "Inspector"
-            font.pixelSize: 18
-            color: "white"
-            font.bold: true
-            Layout.alignment: Qt.AlignLeft
-        }
-
-        // Selected Image Preview
-        Rectangle {
-            Layout.fillWidth: true
-            height: 200
-            radius: 16
-            color: "#141519"
-            border.color: "#2A2B30"
-            border.width: 1
-            clip: true
-            
-            Image {
-                anchors.fill: parent
-                source: actionPanel.selectedItem ? actionPanel.selectedItem.imageSource : ""
-                fillMode: Image.PreserveAspectCrop
-                visible: actionPanel.selectedItem !== null && actionPanel.selectedItem.imageSource !== ""
-            }
-
-            // Fallback content
-            Label {
-                anchors.centerIn: parent
-                text: "Preview"
-                color: "#8A8D98"
-                font.pixelSize: 16
-                visible: actionPanel.selectedItem === null || actionPanel.selectedItem.imageSource === ""
-            }
-        }
-
-        // Metadata
         ColumnLayout {
-            spacing: 8
+            width: actionPanel.width
+            anchors.margins: 24
+            spacing: 24
+            visible: selectedItem !== null
+            
+            // Add top margin explicitly via Item if needed
+            Item { height: 24 }
             
             Label {
-                text: actionPanel.selectedItem ? actionPanel.selectedItem.name : "Unknown Name"
-                font.pixelSize: 16
+                text: "Inspector"
+                font.pixelSize: 18
                 color: "white"
                 font.bold: true
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft
+                Layout.leftMargin: 24
             }
 
-            Label {
-                text: "Resolution: 3840x2160\nFile Size: 12.4 MB" // Could be dynamic from python
-                font.pixelSize: 13
-                color: "#8A8D98"
-                lineHeight: 1.4
+            // Overview Card
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.margins: 24
+                Layout.topMargin: 0
+                height: 240
+                radius: 16
+                color: "#141519"
+                border.color: "#2A2B30"
+                border.width: 1
+                clip: true
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+
+                    Image {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        source: actionPanel.selectedItem ? actionPanel.selectedItem.imageSource : ""
+                        fillMode: Image.PreserveAspectCrop
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 70
+                        color: "transparent"
+                        
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 16
+                            spacing: 4
+                            
+                            Text {
+                                text: actionPanel.selectedItem ? actionPanel.selectedItem.name : ""
+                                font.pixelSize: 16
+                                color: "white"
+                                font.bold: true
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            Text {
+                                text: "Resolution: 3840x2160 • Size: 12.4 MB"
+                                font.pixelSize: 12
+                                color: "#8A8D98"
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Plugin Settings
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.margins: 24
+                Layout.topMargin: 0
+                spacing: 16
+
+                Label {
+                    text: "VIDEO SETTINGS"
+                    font.pixelSize: 12
+                    font.letterSpacing: 1
+                    font.bold: true
+                    color: "#8A8D98"
+                }
+
+                // Positioning
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label { text: "Positioning"; color: "white"; Layout.fillWidth: true }
+                    ComboBox {
+                        model: ["Scaled", "Centered", "Zoomed"]
+                        currentIndex: appBridge.fillMode
+                        onActivated: appBridge.fillMode = currentIndex
+                        Layout.preferredWidth: 140
+                        
+                        background: Rectangle {
+                            color: "#141519"
+                            border.color: parent.hovered ? "#00FFA3" : "#2A2B30"
+                            radius: 8
+                        }
+                        contentItem: Text {
+                            text: parent.currentText
+                            color: "white"
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 12
+                        }
+                    }
+                }
+
+                // Background
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label { text: "Background"; color: "white"; Layout.fillWidth: true }
+                    ComboBox {
+                        model: ["Solid", "Blur"]
+                        currentIndex: appBridge.blurMode
+                        onActivated: appBridge.blurMode = currentIndex
+                        Layout.preferredWidth: 140
+                        
+                        background: Rectangle {
+                            color: "#141519"
+                            border.color: parent.hovered ? "#00FFA3" : "#2A2B30"
+                            radius: 8
+                        }
+                        contentItem: Text {
+                            text: parent.currentText
+                            color: "white"
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 12
+                        }
+                    }
+                }
+
+                // Play in Loop
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label { text: "Play in Loop"; color: "white"; Layout.fillWidth: true }
+                    Switch {
+                        checked: appBridge.loop
+                        onCheckedChanged: appBridge.loop = checked
+                        
+                        indicator: Rectangle {
+                            implicitWidth: 44
+                            implicitHeight: 24
+                            radius: 12
+                            color: parent.checked ? "#00FFA3" : "#2A2B30"
+                            border.color: parent.checked ? "#00FFA3" : "#8A8D98"
+                            
+                            Rectangle {
+                                x: parent.checked ? parent.width - width - 2 : 2
+                                y: 2
+                                width: 20
+                                height: 20
+                                radius: 10
+                                color: parent.checked ? "#0A0A0C" : "#8A8D98"
+                                Behavior on x { NumberAnimation { duration: 150 } }
+                            }
+                        }
+                    }
+                }
+
+                // Audio Mute
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label { text: "Audio Setup"; color: "white"; Layout.fillWidth: true }
+                    
+                    RowLayout {
+                        spacing: 8
+                        Label { text: "Muted"; color: appBridge.muteAudio ? "white" : "#8A8D98"; font.pixelSize: 12 }
+                        Switch {
+                            checked: !appBridge.muteAudio
+                            onCheckedChanged: appBridge.muteAudio = !checked
+                            
+                            indicator: Rectangle {
+                                implicitWidth: 44
+                                implicitHeight: 24
+                                radius: 12
+                                color: parent.checked ? "#00FFA3" : "#2A2B30"
+                                border.color: parent.checked ? "#00FFA3" : "#8A8D98"
+                                
+                                Rectangle {
+                                    x: parent.checked ? parent.width - width - 2 : 2
+                                    y: 2
+                                    width: 20
+                                    height: 20
+                                    radius: 10
+                                    color: parent.checked ? "#0A0A0C" : "#8A8D98"
+                                    Behavior on x { NumberAnimation { duration: 150 } }
+                                }
+                            }
+                        }
+                        Label { text: "Sound"; color: !appBridge.muteAudio ? "white" : "#8A8D98"; font.pixelSize: 12 }
+                    }
+                }
+
+                // Speed
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Layout.topMargin: 8
+                    
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Label { text: "Playback Speed"; color: "white" }
+                        Item { Layout.fillWidth: true }
+                        Label { text: appBridge.playbackRate.toFixed(1) + "x"; color: "#00FFA3"; font.bold: true }
+                    }
+                    
+                    Slider {
+                        Layout.fillWidth: true
+                        from: 0.1
+                        to: 4.0
+                        value: appBridge.playbackRate
+                        onValueChanged: appBridge.playbackRate = value
+                        
+                        background: Rectangle {
+                            x: parent.leftPadding
+                            y: parent.topPadding + parent.availableHeight / 2 - height / 2
+                            implicitWidth: 200
+                            implicitHeight: 6
+                            width: parent.availableWidth
+                            height: implicitHeight
+                            radius: 3
+                            color: "#2A2B30"
+                            
+                            Rectangle {
+                                width: parent.visualPosition * parent.width
+                                height: parent.height
+                                color: "#00FFA3"
+                                radius: 3
+                            }
+                        }
+                        handle: Rectangle {
+                            x: parent.leftPadding + parent.visualPosition * (parent.availableWidth - width)
+                            y: parent.topPadding + parent.availableHeight / 2 - height / 2
+                            implicitWidth: 20
+                            implicitHeight: 20
+                            radius: 10
+                            color: parent.pressed ? "#33FFB7" : "#00FFA3"
+                        }
+                    }
+                }
+            }
+
+            Item { Layout.fillHeight: true; Layout.minimumHeight: 24 } // spacer
+
+            // Action Buttons
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.margins: 24
+                Layout.topMargin: 0
+                Layout.bottomMargin: 48
+                spacing: 12
+
+                Button {
+                    id: desktopBtn
+                    Layout.fillWidth: true
+                    height: 48
+                    text: "Apply to Desktop"
+                    font.pixelSize: 14
+                    font.bold: true
+                    contentItem: Text {
+                        text: desktopBtn.text
+                        font: desktopBtn.font
+                        color: desktopBtn.hovered ? "#00FFA3" : "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        color: "transparent"
+                        border.color: desktopBtn.hovered ? "#00FFA3" : "#2A2B30"
+                        border.width: 1
+                        radius: 24
+                    }
+                    onClicked: {
+                        if (actionPanel.selectedItem) {
+                            appBridge.applyWallpaper(actionPanel.selectedItem.path, "desktop")
+                        }
+                    }
+                }
+
+                Button {
+                    id: lockScreenBtn
+                    Layout.fillWidth: true
+                    height: 48
+                    text: "Apply to Lock Screen"
+                    font.pixelSize: 14
+                    font.bold: true
+                    contentItem: Text {
+                        text: lockScreenBtn.text
+                        font: lockScreenBtn.font
+                        color: lockScreenBtn.hovered ? "#00FFA3" : "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        color: "transparent"
+                        border.color: lockScreenBtn.hovered ? "#00FFA3" : "#2A2B30"
+                        border.width: 1
+                        radius: 24
+                    }
+                    onClicked: {
+                        if (actionPanel.selectedItem) {
+                            // FIXED BUG HERE: Passed "lock screen" with space instead of "lock_screen"
+                            appBridge.applyWallpaper(actionPanel.selectedItem.path, "lock screen")
+                        }
+                    }
+                }
+
+                Button {
+                    id: bothBtn
+                    Layout.fillWidth: true
+                    height: 48
+                    text: "Apply to Both"
+                    font.pixelSize: 14
+                    font.bold: true
+                    
+                    contentItem: Text {
+                        text: bothBtn.text
+                        font: bothBtn.font
+                        color: "#0A0A0C"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    background: Rectangle {
+                        color: bothBtn.hovered ? "#33FFB7" : "#00FFA3"
+                        radius: 24
+                    }
+                    onClicked: {
+                        if (actionPanel.selectedItem) {
+                            appBridge.applyWallpaper(actionPanel.selectedItem.path, "both")
+                        }
+                    }
+                }
             }
         }
-
-        Item { Layout.fillHeight: true } // spacer pushes buttons down
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 12
-
-            Button {
-                id: desktopBtn
-                Layout.fillWidth: true
-                height: 48
-                text: "Apply to Desktop"
-                font.pixelSize: 14
-                font.bold: true
-                contentItem: Text {
-                    text: desktopBtn.text
-                    font: desktopBtn.font
-                    color: desktopBtn.down ? "#00FFA3" : "white"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                background: Rectangle {
-                    color: "transparent"
-                    border.color: desktopBtn.down ? "#00FFA3" : "#2A2B30"
-                    border.width: 1
-                    radius: 24
-                }
-                onClicked: {
-                    if (actionPanel.selectedItem) {
-                        appBridge.applyWallpaper(actionPanel.selectedItem.path, "desktop")
-                    }
-                }
-            }
-
-            Button {
-                id: lockScreenBtn
-                Layout.fillWidth: true
-                height: 48
-                text: "Apply to Lock Screen"
-                font.pixelSize: 14
-                font.bold: true
-                contentItem: Text {
-                    text: lockScreenBtn.text
-                    font: lockScreenBtn.font
-                    color: lockScreenBtn.down ? "#00FFA3" : "white"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                background: Rectangle {
-                    color: "transparent"
-                    border.color: lockScreenBtn.down ? "#00FFA3" : "#2A2B30"
-                    border.width: 1
-                    radius: 24
-                }
-                onClicked: {
-                    if (actionPanel.selectedItem) {
-                        appBridge.applyWallpaper(actionPanel.selectedItem.path, "lock_screen")
-                    }
-                }
-            }
-
-            Button {
-                id: bothBtn
-                Layout.fillWidth: true
-                height: 48
-                text: "Apply to Both"
-                font.pixelSize: 14
-                font.bold: true
-                
-                contentItem: Text {
-                    text: bothBtn.text
-                    font: bothBtn.font
-                    color: "#0A0A0C" // Dark text
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                
-                background: Rectangle {
-                    color: bothBtn.down ? Qt.darker("#00FFA3", 1.2) : "#00FFA3"
-                    radius: 24
-                }
-                onClicked: {
-                    if (actionPanel.selectedItem) {
-                        appBridge.applyWallpaper(actionPanel.selectedItem.path, "both")
-                    }
-                }
-            }
-        }
-    }
-    
-    // Placeholder when nothing selected
-    ColumnLayout {
-        anchors.centerIn: parent
-        spacing: 16
-        visible: selectedItem === null
         
-        Label {
-            text: "No Wallpaper Selected"
-            font.pixelSize: 16
-            color: "#8A8D98"
-            Layout.alignment: Qt.AlignHCenter
+        // Placeholder when nothing selected
+        ColumnLayout {
+            width: actionPanel.width
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 16
+            visible: selectedItem === null
+            
+            Label {
+                text: "No Wallpaper Selected"
+                font.pixelSize: 16
+                color: "#8A8D98"
+                Layout.alignment: Qt.AlignHCenter
+            }
         }
     }
 }

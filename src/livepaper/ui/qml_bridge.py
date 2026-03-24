@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 import os
+import typing
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, QThread, pyqtProperty, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import (
+    QAbstractListModel,
+    QByteArray,
+    QModelIndex,
+    QObject,
+    Qt,
+    QThread,
+    pyqtProperty,
+    pyqtSignal,
+    pyqtSlot,
+)
 
-from livepaper.models import SystemStatus
+from livepaper.models import BlurMode, FillMode, SystemStatus
 from livepaper.services.config_manager import (
     add_wallpapers_to_library,
     remove_wallpaper_from_library,
@@ -29,6 +40,43 @@ class _DetectionWorker(QThread):
         self.finished.emit(status)
 
 
+class WallpaperListModel(QAbstractListModel):
+    NameRole = Qt.ItemDataRole.UserRole + 1
+    PathRole = Qt.ItemDataRole.UserRole + 2
+    ImageSourceRole = Qt.ItemDataRole.UserRole + 3
+
+    def __init__(self, service: WallpaperService, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+        self._service = service
+
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:  # noqa: B008
+        return len(self._service.config.wallpapers)
+
+    def data(self, index: QModelIndex, role: int) -> typing.Any:
+        if not index.isValid():
+            return None
+        w = self._service.config.wallpapers[index.row()]
+        if role == self.NameRole:
+            return w.name
+        elif role == self.PathRole:
+            return str(w.path)
+        elif role == self.ImageSourceRole:
+            return f"file://{w.thumbnail_path}" if w.thumbnail_path and w.thumbnail_path.exists() else ""
+        return None
+
+    def roleNames(self) -> dict[int, QByteArray]:
+        return {
+            self.NameRole: b"name",
+            self.PathRole: b"path",
+            self.ImageSourceRole: b"imageSource",
+        }
+
+    def reload(self) -> None:
+        self.beginResetModel()
+        self._service.reload_config()
+        self.endResetModel()
+
+
 class AppBridge(QObject):
     """Bridge converting Python backend calls to QML interface."""
 
@@ -41,6 +89,61 @@ class AppBridge(QObject):
         super().__init__(parent)
         self._service = service
         self._check_worker: _DetectionWorker | None = None
+        self._wallpaper_model = WallpaperListModel(service, self)
+        self._loop = False
+
+    @pyqtProperty(QObject, constant=True)
+    def wallpaperModel(self) -> WallpaperListModel:
+        return self._wallpaper_model
+
+    @pyqtProperty(int, notify=configChanged)
+    def fillMode(self) -> int:
+        return self._service.config.video.fill_mode
+
+    @fillMode.setter
+    def fillMode(self, value: int) -> None:
+        self._service.config.video.fill_mode = FillMode(value)
+        self._service.save_config(self._service.config)
+        self.configChanged.emit()
+
+    @pyqtProperty(int, notify=configChanged)
+    def blurMode(self) -> int:
+        return self._service.config.video.blur_mode
+
+    @blurMode.setter
+    def blurMode(self, value: int) -> None:
+        self._service.config.video.blur_mode = BlurMode(value)
+        self._service.save_config(self._service.config)
+        self.configChanged.emit()
+
+    @pyqtProperty(bool, notify=configChanged)
+    def loop(self) -> bool:
+        return self._loop
+
+    @loop.setter
+    def loop(self, value: bool) -> None:
+        self._loop = value
+        self.configChanged.emit()
+
+    @pyqtProperty(bool, notify=configChanged)
+    def muteAudio(self) -> bool:
+        return self._service.config.playback.mute_audio
+
+    @muteAudio.setter
+    def muteAudio(self, value: bool) -> None:
+        self._service.config.playback.mute_audio = value
+        self._service.save_config(self._service.config)
+        self.configChanged.emit()
+
+    @pyqtProperty(float, notify=configChanged)
+    def playbackRate(self) -> float:
+        return self._service.config.playback.playback_rate
+
+    @playbackRate.setter
+    def playbackRate(self, value: float) -> None:
+        self._service.config.playback.playback_rate = max(0.1, min(value, 4.0))
+        self._service.save_config(self._service.config)
+        self.configChanged.emit()
 
     @pyqtSlot()
     def openAddDialog(self) -> None:
@@ -50,7 +153,7 @@ class AppBridge(QObject):
         if paths:
             print(f"Adding wallpapers: {paths}")
             add_wallpapers_to_library(paths)
-            self._service.reload_config()
+            self._wallpaper_model.reload()
             self.wallpapersChanged.emit()
 
             # Start background thumbnail generation
@@ -78,7 +181,7 @@ class AppBridge(QObject):
 
                 # Reload config and signal correctly from the main thread
                 def _update():
-                    self._service.reload_config()
+                    self._wallpaper_model.reload()
                     self.wallpapersChanged.emit()
                 QTimer.singleShot(0, _update)
 
@@ -90,7 +193,7 @@ class AppBridge(QObject):
         try:
             print(f"Received request to remove: {path_str}")
             remove_wallpaper_from_library(Path(path_str))
-            self._service.reload_config()
+            self._wallpaper_model.reload()
             self.wallpapersChanged.emit()
             print("Successfully removed.")
         except Exception as e:

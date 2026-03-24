@@ -7,29 +7,6 @@ Item {
     
     signal wallpaperSelected(var wallpaperItem)
 
-    // Load dynamic wallpapers from python bridge
-    property var wallpaperList: []
-    
-    // Auto-refresh when signal received
-    Connections {
-        target: appBridge
-        function onWallpapersChanged() {
-            wallpapersPage.refresh()
-        }
-    }
-    
-    Component.onCompleted: {
-        refresh()
-    }
-    
-    function refresh() {
-        var items = appBridge.getWallpapers()
-        listModel.clear()
-        for (var i = 0; i < items.length; i++) {
-            listModel.append(items[i])
-        }
-    }
-
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 32
@@ -47,18 +24,16 @@ Item {
                 Layout.fillWidth: true
             }
 
-            // Only show + Add Wallpaper here if there are wallpapers
             Button {
                 id: addBtnTop
                 text: "＋ Add Wallpaper"
                 font.pixelSize: 14
                 font.bold: true
-                visible: listModel.count > 0
                 
                 contentItem: Text {
                     text: addBtnTop.text
                     font: addBtnTop.font
-                    color: "white"
+                    color: "#0A0A0C"
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -66,89 +41,148 @@ Item {
                 background: Rectangle {
                     implicitWidth: 160
                     implicitHeight: 40
-                    color: addBtnTop.down ? Qt.darker("#228be6", 1.2) : "#228be6"
-                    radius: 8
+                    color: addBtnTop.hovered ? "#33FFB7" : "#00FFA3"
+                    radius: 20
                 }
                 
                 onClicked: appBridge.openAddDialog()
             }
         }
 
-        // Grid Area (when wallpapers exist)
+        // Grid Area
         GridView {
             id: grid
             Layout.fillWidth: true
             Layout.fillHeight: true
-            cellWidth: 260
-            cellHeight: 180
+            cellWidth: width / 4
+            cellHeight: cellWidth * 0.8
             clip: true
-            visible: listModel.count > 0
 
-            model: ListModel { id: listModel }
+            model: appBridge.wallpaperModel
 
-            delegate: WallpaperCard {
-                wallpaperName: model.name
-                imageSource: model.imageSource
-                
-                onClicked: {
-                    wallpapersPage.wallpaperSelected({
-                        "name": model.name,
-                        "path": model.path,
-                        "imageSource": model.imageSource
-                    })
-                }
-                
-                onRemoveClicked: {
-                    appBridge.removeWallpaper(model.path)
-                    // If the removed wallpaper was selected, clear the selection
-                    wallpapersPage.wallpaperSelected(null)
+            delegate: Item {
+                width: grid.cellWidth
+                height: grid.cellHeight
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    color: "#141519"
+                    border.color: hoverArea.containsMouse ? "#00FFA3" : "#2A2B30"
+                    border.width: 1
+                    radius: 16
+                    clip: true
+
+                    MouseArea {
+                        id: hoverArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            wallpapersPage.wallpaperSelected({
+                                "name": model.name,
+                                "path": model.path,
+                                "imageSource": model.imageSource
+                            })
+                        }
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 0
+
+                        // Thumbnail
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: "black"
+                            
+                            Image {
+                                anchors.fill: parent
+                                source: model.imageSource
+                                fillMode: Image.PreserveAspectCrop
+                            }
+                        }
+
+                        // Remove Button
+                        Rectangle {
+                            width: 28
+                            height: 28
+                            radius: 14
+                            color: "#0A0A0C"
+                            border.color: "#FF3366"
+                            opacity: removeHover.containsMouse ? 1.0 : 0.0
+                            visible: hoverArea.containsMouse || removeHover.containsMouse
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.topMargin: 8
+                            anchors.rightMargin: 8
+                            
+                            Text {
+                                text: "×"
+                                anchors.centerIn: parent
+                                color: "#FF3366"
+                                font.pixelSize: 20
+                                font.bold: true
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                topPadding: -2 // adjustments for text centering
+                            }
+
+                            MouseArea {
+                                id: removeHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    appBridge.removeWallpaper(model.path)
+                                    wallpapersPage.wallpaperSelected(null)
+                                }
+                            }
+                        }
+
+                        // Footer
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 48
+                            color: "transparent"
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 12
+                                
+                                Rectangle {
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    color: "#00FFA3"
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                Text {
+                                    text: model.name
+                                    color: "white"
+                                    font.pixelSize: 14
+                                    font.bold: true
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         
-        // Empty State (when no wallpapers)
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: listModel.count === 0
-            
-            ColumnLayout {
-                anchors.centerIn: parent
-                spacing: 24
-                
-                Label {
-                    text: "No wallpapers yet.\nClick 'Add Wallpaper' to get started."
-                    color: "#8A8D98"
-                    font.pixelSize: 16
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.alignment: Qt.AlignHCenter
-                }
-                
-                Button {
-                    id: addBtnCenter
-                    text: "＋ Add Wallpaper"
-                    font.pixelSize: 16
-                    font.bold: true
-                    Layout.alignment: Qt.AlignHCenter
-                    
-                    contentItem: Text {
-                        text: addBtnCenter.text
-                        font: addBtnCenter.font
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    
-                    background: Rectangle {
-                        implicitWidth: 180
-                        implicitHeight: 48
-                        color: addBtnCenter.down ? Qt.darker("#228be6", 1.2) : "#228be6"
-                        radius: 8
-                    }
-                    
-                    onClicked: appBridge.openAddDialog()
-                }
-            }
+        // Empty State Handler
+        Label {
+            visible: grid.count === 0
+            text: "No wallpapers yet. Click 'Add Wallpaper' to get started."
+            color: "#8A8D98"
+            font.pixelSize: 16
+            horizontalAlignment: Text.AlignHCenter
+            Layout.alignment: Qt.AlignHCenter
         }
     }
 }
