@@ -30,7 +30,6 @@ def detect_plasma_version() -> tuple[bool, str]:
     if output is None:
         return False, ""
 
-    # Output format: "plasmashell 6.x.y"
     for line in output.splitlines():
         parts = line.strip().split()
         if len(parts) >= 2:
@@ -45,7 +44,6 @@ def detect_plasma_version() -> tuple[bool, str]:
 
 def detect_plugin_installed() -> bool:
     """Check if the Smart Video Wallpaper Reborn plugin is installed."""
-    # Check via pacman (Arch) — both release and git variants
     for pkg in [
         "plasma6-wallpapers-smart-video-wallpaper-reborn",
         "plasma6-wallpapers-smart-video-wallpaper-reborn-git",
@@ -53,11 +51,6 @@ def detect_plugin_installed() -> bool:
         if _run_command(["pacman", "-Qi", pkg]) is not None:
             return True
 
-    # Check KDE plugin directories — the plugin may be installed via
-    # "Get New Plugins" (KDE Store) which uses a different directory name:
-    #   ~/.local/share/plasma/wallpapers/luisbocanegra.smart.video.wallpaper.reborn
-    # Or via manual install / package manager:
-    #   /usr/share/plasma/wallpapers/smart-video-wallpaper-reborn
     plugin_dirs = [
         Path.home() / ".local/share/plasma/wallpapers",
         Path("/usr/share/plasma/wallpapers"),
@@ -76,12 +69,9 @@ def detect_plugin_installed() -> bool:
 
 def detect_codecs_available() -> bool:
     """Check if required multimedia codecs are available."""
-    # Check for qt6-multimedia-ffmpeg via pacman
     result = _run_command(["pacman", "-Qi", "qt6-multimedia-ffmpeg"])
     if result is not None:
         return True
-
-    # Fallback: check if ffmpeg is available at all
     return shutil.which("ffmpeg") is not None
 
 

@@ -1,30 +1,86 @@
-"""Pydantic models for Livepaper configuration and data."""
+"""Pydantic models for Livepaper configuration and data.
+
+Config keys mirror the plugin's own config keys exactly so they can be
+passed through verbatim to the DBus evaluateScript call.
+"""
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class PauseCondition(StrEnum):
-    """When to pause the video wallpaper."""
+# ---------------------------------------------------------------------------
+# Enums matching the plugin's internal integer values
+# ---------------------------------------------------------------------------
 
-    NEVER = "never"
-    FULLSCREEN = "fullscreen"
-    MAXIMIZED = "maximized"
-    ACTIVE_WINDOW = "active_window"
+class FillMode(IntEnum):
+    """Video fill/positioning mode — matches Qt VideoOutput fill modes used by plugin."""
+
+    STRETCH = 0           # Stretch to fill, ignoring aspect ratio
+    PRESERVE_ASPECT_FIT = 1   # Fit inside, letterboxed (black bars)
+    PRESERVE_ASPECT_CROP = 2  # Fill and crop to preserve ratio (default)
+    TILE = 3              # Tile the video
+    TILE_VERTICAL = 4
+    TILE_HORIZONTAL = 5
+
+    @property
+    def label(self) -> str:
+        """Human-readable label for the UI."""
+        return {
+            FillMode.STRETCH: "Stretch",
+            FillMode.PRESERVE_ASPECT_FIT: "Fit (keep proportions)",
+            FillMode.PRESERVE_ASPECT_CROP: "Fill (crop to fit)",
+            FillMode.TILE: "Tile",
+            FillMode.TILE_VERTICAL: "Tile vertical",
+            FillMode.TILE_HORIZONTAL: "Tile horizontal",
+        }[self]
 
 
-class BlurCondition(StrEnum):
-    """When to apply blur effect."""
+class PauseMode(IntEnum):
+    """When to pause video playback — mirrors plugin PauseMode integer values."""
 
-    NEVER = "never"
-    ALWAYS = "always"
-    FULLSCREEN = "fullscreen"
-    MAXIMIZED = "maximized"
-    VIDEO_PAUSED = "video_paused"
+    NEVER = 0
+    MAXIMIZED_OR_FULLSCREEN = 1
+    ACTIVE_WINDOW = 2
+    WINDOW_PRESENT = 3
+    DESKTOP_EFFECT = 4
+
+    @property
+    def label(self) -> str:
+        return {
+            PauseMode.NEVER: "Never",
+            PauseMode.MAXIMIZED_OR_FULLSCREEN: "Maximized or fullscreen window",
+            PauseMode.ACTIVE_WINDOW: "Active window",
+            PauseMode.WINDOW_PRESENT: "Window is present",
+            PauseMode.DESKTOP_EFFECT: "Based on active desktop effect",
+        }[self]
+
+
+class BlurMode(IntEnum):
+    """When to apply blur — mirrors plugin BlurMode integer values."""
+
+    NEVER = 0
+    ALWAYS = 1
+    MAXIMIZED_OR_FULLSCREEN = 2
+    ACTIVE_WINDOW = 3
+    WINDOW_PRESENT = 4
+    VIDEO_PAUSED = 5
+    DESKTOP_EFFECT = 6
+
+    @property
+    def label(self) -> str:
+        return {
+            BlurMode.NEVER: "Never",
+            BlurMode.ALWAYS: "Always",
+            BlurMode.MAXIMIZED_OR_FULLSCREEN: "Maximized or fullscreen window",
+            BlurMode.ACTIVE_WINDOW: "Active window",
+            BlurMode.WINDOW_PRESENT: "Window is present",
+            BlurMode.VIDEO_PAUSED: "Video is paused",
+            BlurMode.DESKTOP_EFFECT: "Based on active desktop effect",
+        }[self]
 
 
 class MonitorMode(StrEnum):
@@ -33,6 +89,10 @@ class MonitorMode(StrEnum):
     ALL = "all"
     PER_SCREEN = "per_screen"
 
+
+# ---------------------------------------------------------------------------
+# Data models
+# ---------------------------------------------------------------------------
 
 class WallpaperEntry(BaseModel):
     """A single video wallpaper in the library."""
@@ -44,7 +104,6 @@ class WallpaperEntry(BaseModel):
     @field_validator("path")
     @classmethod
     def validate_path(cls, v: Path) -> Path:
-        """Ensure the video path is absolute and uses no traversal."""
         resolved = v.resolve()
         if ".." in resolved.parts:
             msg = f"Path traversal not allowed: {v}"
@@ -52,31 +111,73 @@ class WallpaperEntry(BaseModel):
         return resolved
 
     def model_post_init(self, __context: object) -> None:
-        """Auto-derive name from filename if not provided."""
         if not self.name:
             object.__setattr__(self, "name", self.path.stem)
 
 
-class AppConfig(BaseModel):
-    """Application settings persisted to disk."""
+class VideoConfig(BaseModel):
+    """Settings that control how video is displayed and when it pauses/blurs.
 
-    # Playback
-    pause_condition: PauseCondition = PauseCondition.FULLSCREEN
-    mute_by_default: bool = False
-    playback_speed: float = Field(default=1.0, ge=0.25, le=4.0)
+    These map directly to the plugin's config keys.
+    """
+
+    # Positioning
+    fill_mode: FillMode = FillMode.PRESERVE_ASPECT_CROP
+
+    # Pause behaviour
+    pause_mode: PauseMode = PauseMode.MAXIMIZED_OR_FULLSCREEN
 
     # Blur
-    blur_enabled: bool = False
+    blur_mode: BlurMode = BlurMode.NEVER
     blur_radius: int = Field(default=40, ge=0, le=100)
+    blur_animation_duration: int = Field(default=300, ge=0, le=5000)
+    blur_on_original_proportions: bool = False
 
-    # Battery
+    # Battery saver
     battery_saver_enabled: bool = True
     battery_threshold: int = Field(default=20, ge=5, le=100)
 
-    # Lock screen
+    # Per-monitor window detection
+    check_windows_from_all_screens: bool = False
+
+
+class PlaybackConfig(BaseModel):
+    """Settings that control video playback behaviour.
+
+    These map directly to the plugin's config keys.
+    """
+
+    # Audio
+    mute_audio: bool = False
+    volume: int = Field(default=100, ge=0, le=100)
+
+    # Speed
+    playback_rate: float = Field(default=1.0, ge=0.1, le=4.0)
+    playback_rate_alt: float = Field(default=0.25, ge=0.1, le=4.0)
+
+    # Playlist
+    random_order: bool = False
+    resume_time: bool = False   # resume from last position on startup
+    timer: int = Field(default=0, ge=0)   # seconds per video; 0 = off (use full length)
+
+    # Cross-fade transition (Beta feature of the plugin)
+    fade_enabled: bool = False
+    fade_duration: int = Field(default=1000, ge=100, le=10000)
+
+
+class AppConfig(BaseModel):
+    """Full application config persisted to ~/.config/livepaper/config.json."""
+
+    # Video display + smart features
+    video: VideoConfig = Field(default_factory=VideoConfig)
+
+    # Playback settings
+    playback: PlaybackConfig = Field(default_factory=PlaybackConfig)
+
+    # Lock screen sync
     sync_lock_screen: bool = False
 
-    # Monitors
+    # Monitor targeting
     monitor_mode: MonitorMode = MonitorMode.ALL
 
     # Library
@@ -85,6 +186,10 @@ class AppConfig(BaseModel):
     # First-run flag
     first_run_complete: bool = False
 
+
+# ---------------------------------------------------------------------------
+# System check models (unchanged)
+# ---------------------------------------------------------------------------
 
 class SystemCheckItem(BaseModel):
     """Single item in the system health check."""
@@ -105,11 +210,9 @@ class SystemStatus(BaseModel):
 
     @property
     def all_checks_passed(self) -> bool:
-        """Return True if all system checks pass."""
         return self.plasma_ok and self.plugin_installed and self.codecs_available
 
     def to_check_items(self) -> list[SystemCheckItem]:
-        """Convert to a list of displayable check items."""
         return [
             SystemCheckItem(
                 name="KDE Plasma 6",
@@ -124,9 +227,9 @@ class SystemStatus(BaseModel):
                 fix_url="https://aur.archlinux.org/packages/plasma6-wallpapers-smart-video-wallpaper-reborn",
             ),
             SystemCheckItem(
-                name="Media Codecs (qt6-multimedia-ffmpeg)",
+                name="Media codecs (qt6-multimedia-ffmpeg)",
                 passed=self.codecs_available,
-                message="Available" if self.codecs_available else "Missing",
+                message="Available" if self.codecs_available else "Missing — video will not play",
                 fix_url="https://wiki.archlinux.org/title/Codecs_and_containers#Video_codecs",
             ),
         ]

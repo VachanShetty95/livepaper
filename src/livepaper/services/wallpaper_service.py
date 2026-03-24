@@ -15,15 +15,13 @@ from livepaper.services.dbus_client import apply_desktop_wallpaper
 
 
 class WallpaperTarget(StrEnum):
-    """Where to apply the wallpaper."""
-
     DESKTOP = "desktop"
-    LOCK_SCREEN = "lock_screen"
+    LOCK_SCREEN = "lock screen"
     BOTH = "both"
 
 
 class WallpaperService:
-    """Facade coordinating DBus and config operations."""
+    """Facade coordinating DBus and config-file operations."""
 
     def __init__(self, config_file: Path | None = None) -> None:
         self._config_file = config_file
@@ -31,16 +29,13 @@ class WallpaperService:
 
     @property
     def config(self) -> AppConfig:
-        """Return current application config."""
         return self._config
 
     def reload_config(self) -> AppConfig:
-        """Reload config from disk."""
         self._config = read_app_config(self._config_file)
         return self._config
 
     def save_config(self, config: AppConfig) -> None:
-        """Save updated config to disk."""
         self._config = config
         write_app_config(config, self._config_file)
 
@@ -52,17 +47,19 @@ class WallpaperService:
     ) -> None:
         """Apply video wallpaper(s) to the specified target.
 
-        Args:
-            video_paths: List of video file paths.
-            target: Where to apply (desktop, lock screen, or both).
-            screen_index: Screen index for desktop (-1 = all screens).
-
-        Raises:
-            FileNotFoundError: If any video file doesn't exist.
-            dbus_client.DBusError: If the DBus command fails.
+        Passes the full AppConfig to both the desktop DBus call and the
+        lock screen config write, so all settings (fill mode, pause mode,
+        blur, battery, playback speed, volume, etc.) are applied consistently.
         """
+        cfg = self._config
+
         if target in (WallpaperTarget.DESKTOP, WallpaperTarget.BOTH):
-            apply_desktop_wallpaper(video_paths, screen_index)
+            apply_desktop_wallpaper(
+                video_paths,
+                screen_index=screen_index,
+                video_config=cfg.video,
+                playback_config=cfg.playback,
+            )
 
         if target in (WallpaperTarget.LOCK_SCREEN, WallpaperTarget.BOTH):
-            apply_lock_screen_wallpaper(video_paths)
+            apply_lock_screen_wallpaper(video_paths, config=cfg)

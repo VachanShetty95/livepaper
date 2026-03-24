@@ -1,1 +1,1 @@
-"""Empty init for models package — models are in __init__.py."""
+"""Empty init for services package."""
