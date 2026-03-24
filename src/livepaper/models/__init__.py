@@ -11,7 +11,6 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
-
 # ---------------------------------------------------------------------------
 # Enums matching the plugin's internal integer values
 # ---------------------------------------------------------------------------

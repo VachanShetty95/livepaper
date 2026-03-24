@@ -138,7 +138,7 @@ class SettingsPage(QWidget):
         speed_layout, self._speed_slider, self._speed_label = self._labeled_slider(
             10, 400, "x", 50
         )
-        # Display as decimal: stored as 10–400, shown as 0.10–4.00
+        # Display as decimal: stored as 10-400, shown as 0.10-4.00
         self._speed_slider.valueChanged.connect(
             lambda v: self._speed_label.setText(f"{v / 100:.2f}x")
         )

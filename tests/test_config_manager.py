@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from livepaper.models import AppConfig, BlurMode, FillMode, PauseMode, PlaybackConfig, VideoConfig, WallpaperEntry
+from livepaper.models import (
+    AppConfig,
+    BlurMode,
+    FillMode,
+    PauseMode,
+    PlaybackConfig,
+    VideoConfig,
+    WallpaperEntry,
+)
 from livepaper.services.config_manager import (
     add_wallpapers_to_library,
     apply_lock_screen_wallpaper,
