@@ -90,7 +90,6 @@ class AppBridge(QObject):
         self._service = service
         self._check_worker: _DetectionWorker | None = None
         self._wallpaper_model = WallpaperListModel(service, self)
-        self._loop = False
 
     @pyqtProperty(QObject, constant=True)
     def wallpaperModel(self) -> WallpaperListModel:
@@ -117,12 +116,23 @@ class AppBridge(QObject):
         self.configChanged.emit()
 
     @pyqtProperty(bool, notify=configChanged)
+    def fillBlur(self) -> bool:  # noqa: N802
+        return self._service.config.video.blur_on_original_proportions
+
+    @fillBlur.setter
+    def fillBlur(self, value: bool) -> None:  # noqa: N802
+        self._service.config.video.blur_on_original_proportions = value
+        self._service.save_config(self._service.config)
+        self.configChanged.emit()
+
+    @pyqtProperty(bool, notify=configChanged)
     def loop(self) -> bool:
-        return self._loop
+        return self._service.config.playback.loop_current_video
 
     @loop.setter
     def loop(self, value: bool) -> None:
-        self._loop = value
+        self._service.config.playback.loop_current_video = value
+        self._service.save_config(self._service.config)
         self.configChanged.emit()
 
     @pyqtProperty(bool, notify=configChanged)
