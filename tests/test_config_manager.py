@@ -113,8 +113,16 @@ class TestLockScreenWallpaper:
                 pause_mode=PauseMode.ACTIVE_WINDOW,
                 blur_mode=BlurMode.ALWAYS,
                 blur_radius=60,
+                blur_on_original_proportions=False,
             ),
-            playback=PlaybackConfig(volume=75, random_order=True),
+            playback=PlaybackConfig(
+                volume=75,
+                mute_audio=True,
+                random_order=True,
+                loop_current_video=True,
+                fade_enabled=True,
+                fade_duration=1500,
+            ),
         )
         apply_lock_screen_wallpaper([sample_video], config=config, kscreenlocker_path=config_path)
         content = config_path.read_text(encoding="utf-8")
@@ -123,7 +131,12 @@ class TestLockScreenWallpaper:
         assert "BlurMode" in content
         assert "BlurRadius" in content
         assert "Volume" in content
-        assert "RandomOrder" in content
+        assert "MuteMode" in content
+        assert "RandomMode" in content
+        assert "CrossfadeEnabled" in content
+        assert "CrossfadeDuration" in content
+        assert "FillBlur" in content
+        assert '"loop":true' in content
 
     def test_preserves_existing_sections(self, tmp_path: Path, sample_video: Path) -> None:
         config_path = tmp_path / "kscreenlockerrc"

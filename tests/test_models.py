@@ -51,6 +51,7 @@ class TestVideoConfig:
         assert vc.blur_mode == BlurMode.NEVER
         assert vc.blur_radius == 40
         assert vc.blur_animation_duration == 300
+        assert vc.blur_on_original_proportions is True
         assert vc.battery_saver_enabled is True
         assert vc.battery_threshold == 20
         assert vc.check_windows_from_all_screens is False
@@ -84,6 +85,7 @@ class TestPlaybackConfig:
         assert pc.volume == 100
         assert pc.playback_rate == 1.0
         assert pc.playback_rate_alt == 0.25
+        assert pc.loop_current_video is False
         assert pc.random_order is False
         assert pc.resume_time is False
         assert pc.timer == 0

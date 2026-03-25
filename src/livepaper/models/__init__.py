@@ -130,7 +130,7 @@ class VideoConfig(BaseModel):
     blur_mode: BlurMode = BlurMode.NEVER
     blur_radius: int = Field(default=40, ge=0, le=100)
     blur_animation_duration: int = Field(default=300, ge=0, le=5000)
-    blur_on_original_proportions: bool = False
+    blur_on_original_proportions: bool = True
 
     # Battery saver
     battery_saver_enabled: bool = True
@@ -153,6 +153,9 @@ class PlaybackConfig(BaseModel):
     # Speed
     playback_rate: float = Field(default=1.0, ge=0.1, le=4.0)
     playback_rate_alt: float = Field(default=0.25, ge=0.1, le=4.0)
+
+    # Single-video playback
+    loop_current_video: bool = False
 
     # Playlist
     random_order: bool = False

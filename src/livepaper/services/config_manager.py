@@ -7,11 +7,21 @@ import json
 from pathlib import Path
 
 from livepaper.models import AppConfig, WallpaperEntry
-from livepaper.services.dbus_client import PLUGIN_ID
+from livepaper.services.dbus_client import (
+    PLUGIN_ID,
+    build_plugin_config,
+    build_video_urls_value,
+)
 
 APP_CONFIG_DIR = Path.home() / ".config" / "livepaper"
 APP_CONFIG_FILE = APP_CONFIG_DIR / "config.json"
 KSCREENLOCKER_CONFIG = Path.home() / ".config" / "kscreenlockerrc"
+
+
+def _stringify_plugin_value(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
 
 
 def _ensure_config_dir(config_dir: Path | None = None) -> Path:
@@ -72,33 +82,12 @@ def apply_lock_screen_wallpaper(
     if not parser.has_section(plugin_section):
         parser.add_section(plugin_section)
 
-    # Video URLs
-    urls = ",".join(f"file://{p.resolve()}" for p in video_paths)
-    parser.set(plugin_section, "VideoUrls", urls)
+    parser.set(plugin_section, "VideoUrls", build_video_urls_value(video_paths, config.playback if config else None))
 
     # Apply all settings if config is provided
     if config:
-        vc = config.video
-        pc = config.playback
-        parser.set(plugin_section, "FillMode", str(vc.fill_mode.value))
-        parser.set(plugin_section, "PauseMode", str(vc.pause_mode.value))
-        parser.set(plugin_section, "BlurMode", str(vc.blur_mode.value))
-        parser.set(plugin_section, "BlurRadius", str(vc.blur_radius))
-        parser.set(plugin_section, "BlurAnimationDuration", str(vc.blur_animation_duration))
-        parser.set(plugin_section, "BlurOnOriginalProportions",
-                   "true" if vc.blur_on_original_proportions else "false")
-        parser.set(plugin_section, "BatterySaverEnabled",
-                   "true" if vc.battery_saver_enabled else "false")
-        parser.set(plugin_section, "BatteryThreshold", str(vc.battery_threshold))
-        parser.set(plugin_section, "MuteAudio", "true" if pc.mute_audio else "false")
-        parser.set(plugin_section, "Volume", str(pc.volume))
-        parser.set(plugin_section, "PlaybackRate", str(pc.playback_rate))
-        parser.set(plugin_section, "PlaybackRateAlt", str(pc.playback_rate_alt))
-        parser.set(plugin_section, "RandomOrder", "true" if pc.random_order else "false")
-        parser.set(plugin_section, "ResumeTime", "true" if pc.resume_time else "false")
-        parser.set(plugin_section, "Timer", str(pc.timer))
-        parser.set(plugin_section, "FadeEnabled", "true" if pc.fade_enabled else "false")
-        parser.set(plugin_section, "FadeDuration", str(pc.fade_duration))
+        for key, value in build_plugin_config(config.video, config.playback).items():
+            parser.set(plugin_section, key, _stringify_plugin_value(value))
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     with open(config_path, "w", encoding="utf-8") as f:
