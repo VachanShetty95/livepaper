@@ -73,7 +73,7 @@ class TestBuildWallpaperScript:
     def test_single_video_url(self, sample_video: Path) -> None:
         script = _build_wallpaper_script([sample_video])
         assert "VideoUrls" in script
-        assert "file://" in script
+        assert '\\"filename\\":\\"file://' in script
 
     def test_multiple_videos(self, tmp_path: Path) -> None:
         videos = []
@@ -98,31 +98,55 @@ class TestBuildWallpaperScript:
             pause_mode=PauseMode.ACTIVE_WINDOW,
             blur_mode=BlurMode.MAXIMIZED_OR_FULLSCREEN,
             blur_radius=60,
+            blur_on_original_proportions=False,
             battery_threshold=30,
+            check_windows_from_all_screens=True,
         )
         script = _build_wallpaper_script([sample_video], video_config=vc)
         assert "FillMode" in script
         assert "PauseMode" in script
         assert "BlurMode" in script
         assert "BlurRadius" in script
-        assert "BatteryThreshold" in script
+        assert "PauseBatteryLevel" in script
+        assert "FillBlur" in script
+        assert "CheckWindowsActiveScreen" in script
         assert "30" in script  # battery threshold value
+        assert 'd.writeConfig("PauseMode", 1);' in script
+        assert 'd.writeConfig("BlurMode", 0);' in script
+        assert 'd.writeConfig("FillBlur", false);' in script
+        assert 'd.writeConfig("CheckWindowsActiveScreen", false);' in script
 
     def test_playback_config_written(self, sample_video: Path) -> None:
         pc = PlaybackConfig(
             volume=75,
+            mute_audio=True,
             playback_rate=1.5,
             random_order=True,
+            resume_time=True,
+            loop_current_video=True,
+            timer=125,
             fade_enabled=True,
             fade_duration=2000,
         )
         script = _build_wallpaper_script([sample_video], playback_config=pc)
         assert "Volume" in script
         assert "PlaybackRate" in script
-        assert "RandomOrder" in script
-        assert "FadeEnabled" in script
-        assert "FadeDuration" in script
+        assert "AlternativePlaybackRate" in script
+        assert "MuteMode" in script
+        assert "RandomMode" in script
+        assert "ResumeLastVideo" in script
+        assert "CrossfadeEnabled" in script
+        assert "CrossfadeDuration" in script
+        assert "ChangeWallpaperMode" in script
         assert "2000" in script
+        assert 'd.writeConfig("Volume", 0.75);' in script
+        assert 'd.writeConfig("MuteMode", 5);' in script
+        assert 'd.writeConfig("RandomMode", true);' in script
+        assert 'd.writeConfig("ResumeLastVideo", true);' in script
+        assert 'd.writeConfig("ChangeWallpaperMode", 2);' in script
+        assert 'd.writeConfig("ChangeWallpaperTimerMinutes", 2);' in script
+        assert 'd.writeConfig("ChangeWallpaperTimerSeconds", 5);' in script
+        assert '\\"loop\\":true' in script
 
 
 class TestApplyDesktopWallpaper:
@@ -155,7 +179,7 @@ class TestApplyDesktopWallpaper:
         apply_desktop_wallpaper([sample_video], playback_config=pc)
         script_arg = mock_subprocess.call_args[0][0][-1]
         assert "Volume" in script_arg
-        assert "MuteAudio" in script_arg
+        assert "MuteMode" in script_arg
 
 
 class TestGetEvaluateScriptCommand:
