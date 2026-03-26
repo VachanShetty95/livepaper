@@ -6,6 +6,23 @@ Rectangle {
     id: actionPanel
 
     property var selectedItem: null
+    readonly property var positioningOptions: [{
+        "text": "Stretch",
+        "value": 0
+    }, {
+        "text": "Centered",
+        "value": 1
+    }, {
+        "text": "Zoomed",
+        "value": 2
+    }]
+    readonly property var backgroundOptions: [{
+        "text": "Solid",
+        "value": 0
+    }, {
+        "text": "Blur",
+        "value": 1
+    }]
 
     width: 360
     Layout.fillHeight: true
@@ -131,9 +148,13 @@ Rectangle {
                         }
 
                         ComboBox {
-                            model: ["Stretch", "Keep Proportions", "Scaled and Cropped"]
-                            currentIndex: appBridge.fillMode
-                            onActivated: appBridge.fillMode = currentIndex
+                            id: positioningCombo
+
+                            model: actionPanel.positioningOptions
+                            textRole: "text"
+                            valueRole: "value"
+                            currentIndex: indexOfValue(appBridge.fillMode)
+                            onActivated: appBridge.fillMode = currentValue
                             Layout.preferredWidth: 140
 
                             background: Rectangle {
@@ -143,14 +164,24 @@ Rectangle {
                             }
 
                             contentItem: Text {
-                                text: parent.currentText
+                                text: positioningCombo.displayText
                                 color: "white"
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: 12
+                                rightPadding: 24
+                                elide: Text.ElideRight
                             }
 
                         }
 
+                    }
+
+                    Text {
+                        text: "These positioning changes are easiest to see when the video and screen aspect ratios differ."
+                        color: "#8A8D98"
+                        font.pixelSize: 11
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
                     }
 
                     // Background
@@ -166,9 +197,13 @@ Rectangle {
                         }
 
                         ComboBox {
-                            model: ["Solid", "Blur"]
-                            currentIndex: appBridge.fillBlur ? 1 : 0
-                            onActivated: appBridge.fillBlur = currentIndex === 1
+                            id: backgroundCombo
+
+                            model: actionPanel.backgroundOptions
+                            textRole: "text"
+                            valueRole: "value"
+                            currentIndex: indexOfValue(appBridge.fillBlur ? 1 : 0)
+                            onActivated: appBridge.fillBlur = currentValue === 1
                             Layout.preferredWidth: 140
 
                             background: Rectangle {
@@ -178,10 +213,12 @@ Rectangle {
                             }
 
                             contentItem: Text {
-                                text: parent.currentText
+                                text: backgroundCombo.displayText
                                 color: "white"
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: 12
+                                rightPadding: 24
+                                elide: Text.ElideRight
                             }
 
                         }
@@ -198,38 +235,20 @@ Rectangle {
                             Layout.fillWidth: true
                         }
 
-                        Switch {
-                            checked: appBridge.loop
-                            onCheckedChanged: appBridge.loop = checked
-
-                            indicator: Rectangle {
-                                implicitWidth: 44
-                                implicitHeight: 24
-                                radius: 12
-                                color: parent.checked ? "#00FFA3" : "#2A2B30"
-                                border.color: parent.checked ? "#00FFA3" : "#8A8D98"
-
-                                Rectangle {
-                                    x: parent.checked ? parent.width - width - 2 : 2
-                                    y: 2
-                                    width: 20
-                                    height: 20
-                                    radius: 10
-                                    color: parent.checked ? "#0A0A0C" : "#8A8D98"
-
-                                    Behavior on x {
-                                        NumberAnimation {
-                                            duration: 150
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
+                        Label {
+                            text: "Automatic"
+                            color: "#8A8D98"
+                            font.pixelSize: 12
                         }
 
+                    }
+
+                    Text {
+                        text: "Single wallpapers already loop automatically. This only changes behavior for playlists."
+                        color: "#8A8D98"
+                        font.pixelSize: 11
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
                     }
 
                     // Audio Mute

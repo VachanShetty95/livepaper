@@ -18,7 +18,7 @@ from PyQt6.QtCore import (
     pyqtSlot,
 )
 
-from livepaper.models import BlurMode, FillMode, SystemStatus
+from livepaper.models import AppConfig, BlurMode, FillMode, SystemStatus
 from livepaper.services.config_manager import (
     add_wallpapers_to_library,
     remove_wallpaper_from_library,
@@ -38,6 +38,18 @@ class _DetectionWorker(QThread):
     def run(self) -> None:
         status = detect_system_status()
         self.finished.emit(status)
+
+
+def _deep_merge(base: dict[str, typing.Any], updates: dict[str, typing.Any]) -> dict[str, typing.Any]:
+    """Recursively merge dictionaries while preserving existing nested values."""
+    merged = dict(base)
+    for key, value in updates.items():
+        existing = merged.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            merged[key] = _deep_merge(existing, value)
+        else:
+            merged[key] = value
+    return merged
 
 
 class WallpaperListModel(QAbstractListModel):
@@ -166,7 +178,8 @@ class AppBridge(QObject):
         )
         if paths:
             print(f"Adding wallpapers: {paths}")
-            add_wallpapers_to_library(paths)
+            path_items = [Path(path) for path in paths]
+            add_wallpapers_to_library(path_items, self._service.config_file)
             self._wallpaper_model.reload()
             self.wallpapersChanged.emit()
 
@@ -206,7 +219,7 @@ class AppBridge(QObject):
         """Remove wallpaper from library."""
         try:
             print(f"Received request to remove: {path_str}")
-            remove_wallpaper_from_library(Path(path_str))
+            remove_wallpaper_from_library(Path(path_str), self._service.config_file)
             self._wallpaper_model.reload()
             self.wallpapersChanged.emit()
             print("Successfully removed.")
@@ -238,8 +251,13 @@ class AppBridge(QObject):
     @pyqtSlot("QVariantMap")
     def saveConfig(self, data: dict) -> None:
         """Update and save config from QML dictionary."""
-        config = self._service.config
-        updated = config.model_copy(update=data)
+        try:
+            merged = _deep_merge(self._service.config.model_dump(mode="json"), data)
+            updated = AppConfig.model_validate(merged)
+        except Exception as e:
+            self.errorOccurred.emit("Failed to save settings", str(e))
+            return
+
         self._service.save_config(updated)
         self.configChanged.emit()
 
