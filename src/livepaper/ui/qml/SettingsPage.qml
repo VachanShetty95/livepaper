@@ -37,6 +37,13 @@ Item {
         { text: "All monitors", value: "all" },
         { text: "Per screen", value: "per_screen" }
     ]
+    readonly property var sectionTags: [
+        "Playback",
+        "Blur",
+        "Battery Saver",
+        "Lock Screen",
+        "Displays"
+    ]
 
     Connections {
         target: appBridge
@@ -240,12 +247,16 @@ Item {
     component ThemedSwitch: Switch {
         id: control
 
+        implicitWidth: 46
+        implicitHeight: 26
         padding: 0
         spacing: 0
 
         indicator: Rectangle {
             implicitWidth: 46
             implicitHeight: 26
+            x: 0
+            y: Math.round((control.availableHeight - height) / 2)
             radius: 13
             color: control.checked ? settingsPage.accentColor : settingsPage.trackColor
             border.color: control.checked ? settingsPage.accentColor : settingsPage.mutedColor
@@ -268,8 +279,8 @@ Item {
         }
 
         contentItem: Item {
-            implicitWidth: 0
-            implicitHeight: 0
+            implicitWidth: control.implicitWidth
+            implicitHeight: control.implicitHeight
         }
     }
 
@@ -376,7 +387,7 @@ Item {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: heroRow.implicitHeight + 48
+                        implicitHeight: heroContent.implicitHeight + 48
                         radius: 20
                         border.color: "#214338"
                         border.width: 1
@@ -386,74 +397,61 @@ Item {
                             GradientStop { position: 1.0; color: "#101114" }
                         }
 
-                        RowLayout {
-                            id: heroRow
+                        ColumnLayout {
+                            id: heroContent
 
                             anchors.fill: parent
                             anchors.margins: 24
-                            spacing: 24
+                            spacing: 18
 
-                            ColumnLayout {
+                            Label {
+                                text: "GLOBAL CONTROLS"
+                                color: settingsPage.mutedColor
+                                font.pixelSize: 12
+                                font.bold: true
+                                font.letterSpacing: 1.5
+                            }
+
+                            Label {
+                                text: "Keep the settings tab consistent with the wallpapers experience."
+                                color: "white"
+                                font.pixelSize: 22
+                                font.bold: true
+                                wrapMode: Text.WordWrap
+                                Layout.fillWidth: true
+                            }
+
+                            Text {
+                                text: "The same dark cards, mint accents and compact controls now carry through playback, blur, battery and sync preferences."
+                                color: settingsPage.softTextColor
+                                font.pixelSize: 14
+                                wrapMode: Text.WordWrap
+                                Layout.fillWidth: true
+                            }
+
+                            Flow {
                                 Layout.fillWidth: true
                                 spacing: 10
 
-                                Label {
-                                    text: "GLOBAL CONTROLS"
-                                    color: settingsPage.mutedColor
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                    font.letterSpacing: 1.5
-                                }
+                                Repeater {
+                                    model: settingsPage.sectionTags
 
-                                Label {
-                                    text: "Keep the settings tab consistent with the wallpapers experience."
-                                    color: "white"
-                                    font.pixelSize: 22
-                                    font.bold: true
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
+                                    delegate: Rectangle {
+                                        width: tagLabel.implicitWidth + 24
+                                        height: 32
+                                        radius: 16
+                                        color: "#0F1613"
+                                        border.color: "#214338"
+                                        border.width: 1
 
-                                Text {
-                                    text: "The same dark cards, mint accents and compact controls now carry through playback, blur, battery and sync preferences."
-                                    color: settingsPage.softTextColor
-                                    font.pixelSize: 14
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
+                                        Text {
+                                            id: tagLabel
 
-                            Rectangle {
-                                Layout.preferredWidth: 220
-                                Layout.alignment: Qt.AlignTop
-                                radius: 16
-                                color: "#0F1613"
-                                border.color: "#214338"
-                                border.width: 1
-
-                                ColumnLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 18
-                                    spacing: 10
-
-                                    Repeater {
-                                        model: ["Playback", "Blur", "Battery Saver", "Lock Screen", "Displays"]
-
-                                        delegate: Rectangle {
-                                            Layout.fillWidth: true
-                                            implicitHeight: 30
-                                            radius: 15
-                                            color: "#141519"
-                                            border.color: "#214338"
-                                            border.width: 1
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: modelData
-                                                color: settingsPage.accentColor
-                                                font.pixelSize: 12
-                                                font.bold: true
-                                            }
+                                            anchors.centerIn: parent
+                                            text: modelData
+                                            color: settingsPage.accentColor
+                                            font.pixelSize: 12
+                                            font.bold: true
                                         }
                                     }
                                 }
@@ -527,6 +525,7 @@ Item {
 
                                     ThemedSwitch {
                                         id: muteSwitch
+                                        Layout.alignment: Qt.AlignVCenter
                                     }
                                 }
                             }
@@ -670,6 +669,7 @@ Item {
 
                                     ThemedSwitch {
                                         id: batterySwitch
+                                        Layout.alignment: Qt.AlignVCenter
                                     }
                                 }
                             }
@@ -752,6 +752,7 @@ Item {
 
                                     ThemedSwitch {
                                         id: lockSyncSwitch
+                                        Layout.alignment: Qt.AlignVCenter
                                     }
                                 }
                             }
