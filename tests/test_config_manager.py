@@ -170,6 +170,11 @@ class TestLibraryManagement:
         config = add_wallpapers_to_library([sample_video], tmp_config_file)
         assert len(config.wallpapers) == 1
 
+    def test_add_string_paths(self, tmp_config_file: Path, sample_video: Path) -> None:
+        config = add_wallpapers_to_library([str(sample_video)], tmp_config_file)
+        assert len(config.wallpapers) == 1
+        assert config.wallpapers[0].path == sample_video.resolve()
+
     def test_add_nonexistent_ignored(self, tmp_config_file: Path) -> None:
         config = add_wallpapers_to_library([Path("/nonexistent/video.mp4")], tmp_config_file)
         assert len(config.wallpapers) == 0

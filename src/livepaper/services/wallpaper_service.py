@@ -31,6 +31,10 @@ class WallpaperService:
     def config(self) -> AppConfig:
         return self._config
 
+    @property
+    def config_file(self) -> Path | None:
+        return self._config_file
+
     def reload_config(self) -> AppConfig:
         self._config = read_app_config(self._config_file)
         return self._config

@@ -95,15 +95,16 @@ def apply_lock_screen_wallpaper(
 
 
 def add_wallpapers_to_library(
-    new_paths: list[Path],
+    new_paths: list[Path | str],
     config_file: Path | None = None,
 ) -> AppConfig:
     """Add video files to the wallpaper library (deduplicates by path)."""
     config = read_app_config(config_file)
     existing = {w.path for w in config.wallpapers}
+    resolved_paths = [Path(p).expanduser() for p in new_paths]
     new_entries = [
         WallpaperEntry(path=p)
-        for p in new_paths
+        for p in resolved_paths
         if p.resolve() not in existing and p.exists()
     ]
     updated = config.model_copy(update={"wallpapers": list(config.wallpapers) + new_entries})
