@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from PyQt6.QtGui import QIcon
 from PyQt6.QtQml import QQmlApplicationEngine
 from PyQt6.QtWidgets import QApplication
 
@@ -19,6 +20,8 @@ def main() -> None:
     app.setApplicationName(__app_name__)
     app.setApplicationVersion(__version__)
     app.setDesktopFileName("livepaper")
+    icon_path = Path(__file__).parent / "ui" / "assets" / "livepaper_logo_mark.png"
+    app.setWindowIcon(QIcon(str(icon_path)))
 
     service = WallpaperService()
     bridge = AppBridge(service)
