@@ -36,6 +36,9 @@ package() {
     install -Dm644 resources/livepaper.desktop \
         "${pkgdir}/usr/share/applications/livepaper.desktop"
 
+    install -Dm644 resources/livepaper.png \
+        "${pkgdir}/usr/share/icons/hicolor/256x256/apps/livepaper.png"
+
     install -Dm644 LICENSE \
         "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
