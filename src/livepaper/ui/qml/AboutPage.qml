@@ -9,19 +9,21 @@ Item {
         anchors.centerIn: parent
         spacing: 24
 
-        // Placeholder Icon
-        Label {
-            text: "🎬"
-            font.pixelSize: 64
+        Image {
+            source: "../assets/livepaper_logo_mark.png"
+            Layout.preferredWidth: 120
+            Layout.preferredHeight: 96
+            fillMode: Image.PreserveAspectFit
+            mipmap: true
             Layout.alignment: Qt.AlignHCenter
         }
 
-        // Title
-        Label {
-            text: "LIVEPAPER"
-            font.pixelSize: 28
-            font.bold: true
-            color: "white"
+        Image {
+            source: "../assets/livepaper_wordmark.png"
+            Layout.preferredWidth: 240
+            Layout.preferredHeight: 28
+            fillMode: Image.PreserveAspectFit
+            mipmap: true
             Layout.alignment: Qt.AlignHCenter
         }
 

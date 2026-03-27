@@ -16,14 +16,32 @@ Rectangle {
         spacing: 16
 
         // Logo/Title
-        Label {
-            text: "LIVEPAPER"
-            font.pixelSize: 20
-            font.bold: true
-            font.letterSpacing: 2
-            color: "white"
-            Layout.alignment: Qt.AlignHCenter
+        Item {
+            Layout.fillWidth: true
             Layout.bottomMargin: 24
+
+            implicitHeight: 54
+
+            RowLayout {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 10
+
+                Image {
+                    source: "../assets/livepaper_logo_mark.png"
+                    Layout.preferredWidth: 34
+                    Layout.preferredHeight: 34
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                }
+
+                Image {
+                    source: "../assets/livepaper_wordmark.png"
+                    Layout.preferredWidth: 150
+                    Layout.preferredHeight: 18
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                }
+            }
         }
 
         // Navigation Items
